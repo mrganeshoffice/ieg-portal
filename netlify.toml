@@ -1,0 +1,65 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Single-page app: send each page route to index.html.
+# Routes are listed on purpose (instead of a catch-all "/*") so /api/* and /uploads/* always reach the function.
+# If you add a new top-level page route in src/App.tsx, add it here too.
+[[redirects]]
+  from = "/login"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/admin"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/admin/*"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/about"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/org-chart"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/group-structure"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/hr/*"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/departments/*"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/administration"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/factory-layout"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/factory-dimensions"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/product-ppt"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/settings"
+  to = "/index.html"
+  status = 200
