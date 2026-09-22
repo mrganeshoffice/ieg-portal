@@ -12,9 +12,9 @@ type Kind = 'group' | 'hr' | 'dept' | 'admin';
 
 export default function ChartPage({ kind }: { kind: Kind }) {
   const { n, key } = useParams();
-  const view = useMemo<{ title: string; desc: string; root?: OrgNode }>(() => {
+  const view = useMemo<{ title: string; desc: string; root?: OrgNode; imageUrl?: string }>(() => {
     switch (kind) {
-      case 'group': return { title: 'IEG Group Structure', desc: 'Reporting hierarchy under the Managing Director, with functional heads and business units.', root: groupStructure };
+      case 'group': return { title: 'IEG Group Structure', desc: 'Reporting hierarchy under the Managing Director, with functional heads and business units.', root: groupStructure, imageUrl: '/group-structure-infographic.png' };
       case 'admin': return { title: 'Administration Structure', desc: 'Administration Team, Directors, HR and compliance roles.', root: adminTree };
       case 'hr': { const r = hrTrees[Number(n)]; return { title: `HR Head ${n} Flow`, desc: r ? `${r.label}: Director ${n} → HR Head ${n} → department heads and teams.` : '', root: r }; }
       case 'dept': {
@@ -28,7 +28,7 @@ export default function ChartPage({ kind }: { kind: Kind }) {
   return (
     <>
       <PageHeader title={view.title} description={view.desc} confirmCount={countConfirm(view.root)} />
-      <Gate skeleton={<ChartSkeleton />}><FlowCanvas key={`${kind}-${n}-${key}`} root={view.root} /></Gate>
+      <Gate skeleton={<ChartSkeleton />}><FlowCanvas key={`${kind}-${n}-${key}`} root={view.root} imageUrl={view.imageUrl} /></Gate>
     </>
   );
 }

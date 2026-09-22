@@ -8,21 +8,22 @@ import '@xyflow/react/dist/style.css';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toPng } from 'html-to-image';
 import {
-  ChevronRight, ChevronsDownUp, ChevronsUpDown, Download, ListTree, Maximize2, Minimize2, Printer, RotateCcw, Scan, Search, Workflow, ZoomIn, ZoomOut,
+  ChevronRight, ChevronsDownUp, ChevronsUpDown, Download, Image as ImageIcon, ListTree, Maximize2, Minimize2, Printer, RotateCcw, Scan, Search, Workflow, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import type { OrgNode } from '@/types';
 import { useTheme } from '@/context/ThemeContext';
 import OrgNodeCard from './OrgNodeCard';
 import NodeDrawer from './NodeDrawer';
+import ImageLightbox from '@/components/ui/ImageLightbox';
 import TreeList from './TreeList';
 import { NODE_H, NODE_W, indexTree, layoutTree, type OrgFlowNode } from './layout';
 import { kindMeta } from './nodeStyles';
 
 const nodeTypes = { org: OrgNodeCard };
 
-interface Props { root: OrgNode; defaultCollapsed?: string[] }
+interface Props { root: OrgNode; defaultCollapsed?: string[]; imageUrl?: string }
 
-function Inner({ root, defaultCollapsed = [] }: Props) {
+function Inner({ root, defaultCollapsed = [], imageUrl }: Props) {
   const rf = useReactFlow();
   const { theme } = useTheme();
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -32,6 +33,7 @@ function Inner({ root, defaultCollapsed = [] }: Props) {
   const [query, setQuery] = useState('');
   const [view, setView] = useState<'graph' | 'list'>(() => (typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'graph'));
   const [fullscreen, setFullscreen] = useState(false);
+  const [imageOpen, setImageOpen] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
 
   const index = useMemo(() => indexTree(root), [root]);
@@ -140,6 +142,9 @@ function Inner({ root, defaultCollapsed = [] }: Props) {
           <button className="tool-btn" onClick={() => setView(view === 'graph' ? 'list' : 'graph')} title="Switch view">{view === 'graph' ? <ListTree size={15} /> : <Workflow size={15} />}<span className="hidden sm:inline">{view === 'graph' ? 'List view' : 'Chart view'}</span></button>
           <button className="tool-btn hidden sm:inline-flex" onClick={print} title="Print or save as PDF"><Printer size={15} /><span className="hidden xl:inline">Print</span></button>
           <button className="tool-btn hidden sm:inline-flex" onClick={exportPng} title="Export PNG"><Download size={15} /><span className="hidden xl:inline">PNG</span></button>
+          {imageUrl && (
+            <button className="tool-btn" onClick={() => setImageOpen(true)} aria-label="View reference image" title="View reference image"><ImageIcon size={15} /><span className="hidden lg:inline">View Image</span></button>
+          )}
           <button className="tool-btn" onClick={toggleFullscreen} aria-label="Fullscreen" title="Fullscreen">{fullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}</button>
         </div>
       </div>
@@ -175,6 +180,9 @@ function Inner({ root, defaultCollapsed = [] }: Props) {
           {selectedEntry && <NodeDrawer key="drawer" entry={selectedEntry} onClose={() => setSelected(null)} onSelect={select} />}
         </AnimatePresence>
       </div>
+      {imageUrl && (
+        <ImageLightbox open={imageOpen} onClose={() => setImageOpen(false)} src={imageUrl} title={`${root.label} — reference image`} downloadName={`${root.label.replace(/\W+/g, '-').toLowerCase()}.png`} />
+      )}
     </div>
   );
 }
