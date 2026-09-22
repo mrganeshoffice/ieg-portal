@@ -14,7 +14,7 @@ function collect(source: string, route: string, root: OrgNode, out: Confirmation
 export function allConfirmations(): Confirmation[] {
   const out: Confirmation[] = [];
   collect('IEG Group Structure', '/group-structure', groupStructure, out);
-  Object.entries(hrTrees).forEach(([n, t]) => collect(`HR Head ${n} Flow`, `/hr/${n}`, t, out));
+  Object.entries(hrTrees).forEach(([n, t]) => collect(t.label, `/hr/${n}`, t, out));
   Object.entries(deptTrees).forEach(([k, t]) => collect('Department', `/departments/${k}`, t, out));
   collect('Administration Structure', '/administration', adminTree, out);
   out.push({ id: 'factory-layout', source: 'Factory Layout', label: 'Zone placement', reason: CONFIRM_LAYOUT, route: '/factory-layout' });
