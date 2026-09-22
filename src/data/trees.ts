@@ -50,7 +50,7 @@ export const groupStructure: OrgNode = {
           description: 'Grouping node added for readability. Each unit reports to its Director, with a Head HR beneath.',
           children: [
             ...unitList.map((u) => ({
-              id: `g-unit-${u.n}`, label: u.name, kind: 'subsidiary' as const, subtitle: `Subsidiary ${u.n}`,
+              id: `g-unit-${u.n}`, label: u.name, kind: 'subsidiary' as const,
               children: [{ id: `g-unit-${u.n}-dir`, label: `Director ${u.n}`, kind: 'director' as const, children: [{ id: `g-unit-${u.n}-hr`, label: 'Head HR', kind: 'hr' as const, subtitle: `HR Head ${u.n}` }] }],
             })),
             { id: 'g-unit-6', label: 'R&D', kind: 'rnd' as const, subtitle: 'Director 6 line', children: [{ id: 'g-unit-6-dir', label: 'Director 6', kind: 'director' as const, children: [{ id: 'g-unit-6-hr', label: 'Head HR', kind: 'hr' as const }] }] },
@@ -67,7 +67,7 @@ export function buildHrTree(n: number): OrgNode | undefined {
   const unit = units.find((u) => u.n === n);
   if (!unit) return undefined;
   return {
-    id: `hr${n}-unit`, label: unit.name, subtitle: `Subsidiary ${n}`, kind: 'subsidiary',
+    id: `hr${n}-unit`, label: unit.name, kind: 'subsidiary',
     description: `${unit.name} reporting flow: Director ${n} → HR Head ${n} → department heads.`,
     children: [{
       id: `hr${n}-dir`, label: `Director ${n}`, kind: 'director', description: `Director ${n} oversees ${unit.name}.`,

@@ -13,7 +13,7 @@ import Gate, { CardsSkeleton } from '@/components/ui/Gate';
 
 const cards = [
   { title: 'Factory Layout', desc: 'Vastu-based plant plan with zones and linear material flow.', stat: `${zones.length} mapped zones`, icon: Map, path: '/factory-layout', color: '#34C77B' },
-  { title: 'IEG Group Companies', desc: 'Subsidiaries under the Parent Company and their Directors.', stat: `${subsidiaryCount} subsidiaries`, icon: Building2, path: '/group-structure', color: '#14B8A6' },
+  { title: 'IEG Group Companies', desc: 'Group companies under the Parent Company and their Directors.', stat: `${subsidiaryCount} companies`, icon: Building2, path: '/group-structure', color: '#14B8A6' },
   { title: 'HR Heads', desc: 'One reporting flow per business unit, from Director to team roles.', stat: `${units.length} HR Head flows`, icon: Users, path: '/hr/1', color: '#EC4899' },
   { title: 'Directors', desc: 'Directors 1 to 6 and the business unit each one oversees.', stat: `${directorCount} directors`, icon: Crown, path: '/administration', color: '#F59E0B' },
   { title: 'Departments', desc: 'Electrical, Mechanical, Production, Business, Service, Transport and R&D.', stat: `${departments.length} departments`, icon: Briefcase, path: '/departments/electrical', color: '#22A862' },

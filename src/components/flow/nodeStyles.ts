@@ -4,7 +4,7 @@ import type { NodeKind } from '@/types';
 export const kindMeta: Record<NodeKind, { label: string; icon: LucideIcon; color: string }> = {
   group: { label: 'Group', icon: Network, color: '#1FA2E8' },
   company: { label: 'Company', icon: Building2, color: '#6366F1' },
-  subsidiary: { label: 'Subsidiary', icon: Building, color: '#14B8A6' },
+  subsidiary: { label: 'Company', icon: Building, color: '#14B8A6' },
   director: { label: 'Director', icon: Crown, color: '#F59E0B' },
   management: { label: 'Management', icon: UserCog, color: '#8B5CF6' },
   hr: { label: 'HR', icon: Users, color: '#EC4899' },
