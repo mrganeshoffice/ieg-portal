@@ -42,7 +42,7 @@ export default function App() {
         <Route element={<Protected><AppLayout /></Protected>}>
           <Route index element={<DashboardPage />} />
           <Route path="about" element={<AboutPage />} />
-          <Route path="org-chart" element={<ChartPage kind="org" />} />
+          <Route path="org-chart" element={<Navigate to="/group-structure" replace />} />
           <Route path="group-structure" element={<ChartPage kind="group" />} />
           <Route path="hr/:n" element={<ChartPage kind="hr" />} />
           <Route path="departments/:key" element={<ChartPage kind="dept" />} />

@@ -57,7 +57,7 @@ export default function PresentationForm({ open, presentation, nextOrder, onClos
     if (!title.trim()) e.title = 'Enter a presentation title.';
     else if (title.trim().length > 120) e.title = 'Keep the title within 120 characters.';
     if (!url.trim()) e.url = 'Enter the presentation URL.';
-    else if (!isValidPresentationUrl(url)) e.url = 'Enter a valid link starting with https:// (or a portal path such as /org-chart).';
+    else if (!isValidPresentationUrl(url)) e.url = 'Enter a valid link starting with https:// (or a portal path such as /group-structure).';
     if (!file && !presentation?.thumbnail_url) e.thumb = 'Upload a thumbnail image.';
     if (description.length > 500) e.description = 'Keep the description within 500 characters.';
     if (order.trim() !== '' && !/^\d{1,6}$/.test(order.trim())) e.order = 'Use a whole number, 0 or higher.';
@@ -110,7 +110,7 @@ export default function PresentationForm({ open, presentation, nextOrder, onClos
           <div>
             <label htmlFor="pp-url" className="mb-1.5 block text-sm font-semibold">Presentation URL <span className="text-red-500">*</span></label>
             <input id="pp-url" className="input" type="url" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} disabled={saving} aria-invalid={!!errors.url} aria-describedby="pp-url-help" placeholder="https://docs.google.com/presentation/..." />
-            <p id="pp-url-help" className="mt-1.5 text-xs text-muted">Google Drive, Canva, PDF or any public https link opens in a new tab. A path like /org-chart opens inside the portal.</p>
+            <p id="pp-url-help" className="mt-1.5 text-xs text-muted">Google Drive, Canva, PDF or any public https link opens in a new tab. A path like /group-structure opens inside the portal.</p>
             {fieldErr('pp-url-err', errors.url)}
           </div>
           <div>

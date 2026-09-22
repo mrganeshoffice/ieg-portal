@@ -2,46 +2,11 @@ import type { OrgNode } from '@/types';
 import { PHOTO_CONFIRM, units as unitList } from './common';
 import { departments, deptByKey, units, type DeptKey } from './departments';
 
-/** Each subsidiary (and R&D) carries its own Administration Team, headed by the matching Director. */
-const adminTeamFor = (n: number, unitName: string): OrgNode => ({
-  id: `sub-${n}-admin`, label: 'Administration Team', subtitle: unitName, kind: 'admin',
-  description: `Administration Team of ${unitName}. It is a sub-part of this unit and is led by Director ${n}.`,
-  children: [{
-    id: `sub-${n}-dir`, label: `Director ${n}`, subtitle: unitName, kind: 'director',
-    description: `Director ${n} oversees ${unitName} and its Administration Team (Group chart).`,
-  }],
-});
-
-/* Company Organization Chart  (source: "organization chart" photo) */
-export const orgChart: OrgNode = {
-  id: 'ieg-group', label: 'IEG Group', kind: 'group',
-  description: 'Top of the organization chart. The Parent Company and the Production Manager report from the IEG Group box.',
-  children: [
-    {
-      id: 'parent-company', label: 'Parent Company', subtitle: 'Public Limited Co.', kind: 'company',
-      description: 'Public Limited Company holding the five subsidiaries and R&D. Each of them has its own Administration Team.',
-      children: [
-        ...unitList.map((u) => ({
-          id: `sub-${u.n}`, label: `Subsidiary ${u.n}`, subtitle: u.name, kind: 'subsidiary' as const,
-          description: `${u.name}. Every subsidiary has its own Administration Team, led by Director ${u.n}.`,
-          children: [adminTeamFor(u.n, u.name)],
-        })),
-        {
-          id: 'rnd', label: 'R&D', subtitle: 'Research & Development', kind: 'rnd' as const, department: 'Research & Development',
-          description: 'Research and development function shown beside the subsidiaries. It also has an Administration Team, led by Director 6.',
-          children: [adminTeamFor(6, 'R&D')],
-        },
-      ],
-    },
-    { id: 'production-manager', label: 'Production Manager', kind: 'production', department: 'Production', description: 'Reports from the IEG Group box (organization chart).' },
-  ],
-};
-
 /* IEG Group reporting structure (source: "IEG Group" photo) */
 const head = (id: string, label: string, extra: Partial<OrgNode> = {}): OrgNode => ({ id, label, kind: 'head', ...extra });
 
 export const groupStructure: OrgNode = {
-  id: 'g-root', label: 'IEG Group', kind: 'group',
+  id: 'g-root', label: 'IEG AUTO POWER LTD (IEG Group)', kind: 'group',
   description: 'Group reporting structure as drawn in the IEG Group chart.',
   children: [
     { id: 'g-dir-a', label: 'Vijay Krishna Gupta', subtitle: 'Director', kind: 'director', description: 'Director on the Board of Directors (IEG Technical Presentation). Drawn beside the Managing Director in the Group chart.' },
@@ -59,6 +24,10 @@ export const groupStructure: OrgNode = {
             head('g-production', 'Production Head', { department: 'Production' }),
             head('g-transport', 'Transport Head', { department: 'Transport', confirm: 'Written "Transpot Head" in the photo; assumed to mean Transport Head.' }),
             head('g-service', 'Service Head', { department: 'Service' }),
+            head('g-account', 'Account Head', { department: 'Account' }),
+            head('g-intlbiz', 'International Business Head', { department: 'International Business' }),
+            head('g-finance', 'Finance Head', { department: 'Finance' }),
+            head('g-pr', 'PR Head', { department: 'PR' }),
             { id: 'g-rnd', label: 'R&D', kind: 'rnd', department: 'Research & Development' },
           ],
         },
@@ -90,7 +59,6 @@ export const groupStructure: OrgNode = {
       ],
     },
     { id: 'g-dir-b', label: 'Kanchan Singh', subtitle: 'Director', kind: 'director', description: 'Director on the Board of Directors (IEG Technical Presentation). Drawn beside the Managing Director in the Group chart.' },
-    { id: 'g-pm', label: 'Production Manager', subtitle: '20 pcs', kind: 'production', department: 'Production', confirm: 'The box reads "(20 pcs)". Meaning to be confirmed.', description: 'Production Manager shown outside the main reporting frame with an arrow to the Directors.' },
   ],
 };
 

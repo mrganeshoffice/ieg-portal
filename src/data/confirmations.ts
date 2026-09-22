@@ -1,5 +1,5 @@
 import type { OrgNode } from '@/types';
-import { orgChart, groupStructure, hrTrees, deptTrees, adminTree } from './trees';
+import { groupStructure, hrTrees, deptTrees, adminTree } from './trees';
 import { CONFIRM_500, CONFIRM_LAYOUT } from './factory';
 
 export interface Confirmation { id: string; source: string; label: string; reason: string; route: string; focus?: string }
@@ -13,7 +13,6 @@ function collect(source: string, route: string, root: OrgNode, out: Confirmation
 /** Everything flagged "needs confirmation" across the portal. */
 export function allConfirmations(): Confirmation[] {
   const out: Confirmation[] = [];
-  collect('Organization Chart', '/org-chart', orgChart, out);
   collect('IEG Group Structure', '/group-structure', groupStructure, out);
   Object.entries(hrTrees).forEach(([n, t]) => collect(`HR Head ${n} Flow`, `/hr/${n}`, t, out));
   Object.entries(deptTrees).forEach(([k, t]) => collect('Department', `/departments/${k}`, t, out));

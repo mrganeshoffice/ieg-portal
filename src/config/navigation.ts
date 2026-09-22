@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Network, Building2, Users, Zap, Cog, Factory, Briefcase, Wrench, Truck, FlaskConical,
+  LayoutDashboard, Building2, Users, Zap, Cog, Factory, Briefcase, Wrench, Truck, FlaskConical,
   Map, Ruler, ShieldCheck, Settings, LogOut, Info, Presentation,
 } from 'lucide-react';
 import type { NavItem } from '@/types';
@@ -12,7 +12,6 @@ const deptIcons = { electrical: Zap, mechanical: Cog, production: Factory, busin
 export const navItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', path: '/', icon: LayoutDashboard, section: 'Overview', description: 'Portal overview' },
   { id: 'about', label: 'About IEG', path: '/about', icon: Info, section: 'Overview', description: 'Journey, board of directors, vision and contact details' },
-  { id: 'org', label: 'Company Organization Chart', path: '/org-chart', icon: Network, section: 'Organization', description: 'Group, parent company, subsidiaries and directors' },
   { id: 'group', label: 'IEG Group Structure', path: '/group-structure', icon: Building2, section: 'Organization', description: 'Group reporting hierarchy' },
   ...units.map((u): NavItem => ({ id: `hr${u.n}`, label: `HR Head ${u.n} Flow`, path: `/hr/${u.n}`, icon: Users, section: 'HR Flows', description: `${u.name} reporting flow` })),
   ...departments.map((d): NavItem => ({ id: `dept-${d.key}`, label: d.key === 'rnd' ? 'Research & Development' : d.label, path: `/departments/${d.key}`, icon: deptIcons[d.key], section: 'Departments', description: d.description })),

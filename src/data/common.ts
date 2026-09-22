@@ -2,11 +2,11 @@ export const PHOTO_CONFIRM = 'Read from a photographed chart. Please confirm the
 
 /** Business units in the order used by the Group chart (Director n / HR Head n). */
 export const units = [
-  { n: 1, name: 'Electric Vehicles' },
-  { n: 2, name: 'Home Appliances' },
-  { n: 3, name: 'Consumer Electronics' },
-  { n: 4, name: 'Commercial Power Solutions' },
-  { n: 5, name: 'Motor Efficiency' },
+  { n: 1, name: 'IEG Mega Industrial Power Pvt.Ltd' },
+  { n: 2, name: 'IEG Smart Homes Energies Pvt.Ltd' },
+  { n: 3, name: 'IEG Mega Industrial Power Pvt.Ltd' },
+  { n: 4, name: 'IEG Universal Energies Pvt.Ltd' },
+  { n: 5, name: 'IEG Retro Energies Productions Pvt.Ltd' },
 ] as const;
 
 export const subsidiaryCount = units.length;

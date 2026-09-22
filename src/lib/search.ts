@@ -1,6 +1,6 @@
 import type { NodeKind } from '@/types';
 import { navItems } from '@/config/navigation';
-import { orgChart, groupStructure, hrTrees, deptTrees, adminTree } from '@/data/trees';
+import { groupStructure, hrTrees, deptTrees, adminTree } from '@/data/trees';
 import { walk } from '@/data/confirmations';
 import type { OrgNode } from '@/types';
 
@@ -12,7 +12,6 @@ export function searchIndex(): SearchEntry[] {
   if (cache) return cache;
   const out: SearchEntry[] = navItems.filter((n) => !n.action).map((n) => ({ key: `page:${n.id}`, label: n.label, subtitle: n.description, kind: 'page', route: n.path }));
   const add = (root: OrgNode, route: string, where: string) => walk(root, (n) => out.push({ key: `${route}:${n.id}`, label: n.label, subtitle: [n.subtitle, where].filter(Boolean).join(' · '), kind: n.kind, route, focus: n.id }));
-  add(orgChart, '/org-chart', 'Organization Chart');
   add(groupStructure, '/group-structure', 'Group Structure');
   Object.entries(hrTrees).forEach(([n, t]) => add(t, `/hr/${n}`, `HR Head ${n}`));
   Object.entries(deptTrees).forEach(([k, t]) => add(t, `/departments/${k}`, 'Department'));

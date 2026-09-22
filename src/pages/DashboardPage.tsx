@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Presentation, Briefcase, Building2, Crown, FlaskConical, Factory, Map, Network, Search, ShieldCheck, Users } from 'lucide-react';
+import { ArrowRight, Presentation, Briefcase, Building2, Crown, FlaskConical, Factory, Map, Search, ShieldCheck, Users } from 'lucide-react';
 import { navItems } from '@/config/navigation';
 import { directorCount, subsidiaryCount, units as unitList } from '@/data/common';
 import { departments, units } from '@/data/departments';
@@ -12,7 +12,6 @@ import { kindMeta } from '@/components/flow/nodeStyles';
 import Gate, { CardsSkeleton } from '@/components/ui/Gate';
 
 const cards = [
-  { title: 'Organization Chart', desc: 'Group, parent company, subsidiaries, directors and administration.', stat: 'View Structure', icon: Network, path: '/org-chart', color: '#1FA2E8' },
   { title: 'Factory Layout', desc: 'Vastu-based plant plan with zones and linear material flow.', stat: `${zones.length} mapped zones`, icon: Map, path: '/factory-layout', color: '#34C77B' },
   { title: 'IEG Group Companies', desc: 'Subsidiaries under the Parent Company and their Directors.', stat: `${subsidiaryCount} subsidiaries`, icon: Building2, path: '/group-structure', color: '#14B8A6' },
   { title: 'HR Heads', desc: 'One reporting flow per business unit, from Director to team roles.', stat: `${units.length} HR Head flows`, icon: Users, path: '/hr/1', color: '#EC4899' },
@@ -32,7 +31,7 @@ function Dashboard() {
   const [q, setQ] = useState('');
   const results = useMemo(() => runSearch(q, 6), [q]);
   const recent = getRecent().map((p) => navItems.find((n) => n.path === p)).filter(Boolean) as typeof navItems;
-  const quick = ['/org-chart', '/group-structure', '/hr/1', '/factory-layout', '/factory-dimensions', '/administration'].map((p) => navItems.find((n) => n.path === p)!);
+  const quick = ['/group-structure', '/hr/1', '/factory-layout', '/factory-dimensions', '/administration', '/product-ppt'].map((p) => navItems.find((n) => n.path === p)!);
 
   const distribution = departments.map((d) => {
     const present = units.filter((u) => u.depts.some((x) => x.dept === d.key));
@@ -51,7 +50,7 @@ function Dashboard() {
           <div>
             <h1 className="text-3xl font-extrabold leading-[1.1] tracking-tight md:text-5xl">Welcome to IEG Organization Portal</h1>
             <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-300">See who reports to whom across the Group, each business unit and the factory floor.</p>
-            <Link to="/org-chart" className="btn-primary mt-7 !px-6 !py-3">View Complete Organization<ArrowRight size={17} /></Link>
+            <Link to="/group-structure" className="btn-primary mt-7 !px-6 !py-3">View Complete Organization<ArrowRight size={17} /></Link>
           </div>
           <div className="relative">
             <label htmlFor="dash-search" className="mb-1.5 block text-xs font-semibold text-slate-300">Find a department or role</label>
@@ -103,9 +102,9 @@ function Dashboard() {
         <section className="card p-6">
           <h2 className="text-lg font-bold">Company structure</h2>
           <p className="mt-1 text-sm text-muted">From the Group down to each business unit.</p>
-          <Link to="/org-chart" className="mt-5 block rounded-2xl border border-line bg-app/60 p-4 transition hover:border-brand/50" aria-label="Open organization chart">
+          <Link to="/group-structure" className="mt-5 block rounded-2xl border border-line bg-app/60 p-4 transition hover:border-brand/50" aria-label="Open organization chart">
             <div className="flex flex-col items-center">
-              <span className="rounded-xl bg-navy-900 px-4 py-2 text-sm font-bold text-white">IEG Group</span>
+              <span className="rounded-xl bg-navy-900 px-4 py-2 text-sm font-bold text-white">IEG AUTO POWER LTD (IEG Group)</span>
               <span className="h-4 w-px bg-line" />
               <span className="rounded-xl border border-indigo-400/50 bg-indigo-500/10 px-4 py-2 text-sm font-semibold">Parent Company · Public Limited Co.</span>
               <span className="h-4 w-px bg-line" />
@@ -115,7 +114,6 @@ function Dashboard() {
               <div className="mt-3 flex flex-wrap justify-center gap-2 text-xs font-medium">
                 <span className="rounded-lg border border-emerald-400/50 bg-emerald-500/10 px-2.5 py-1.5">R&D</span>
                 <span className="rounded-lg border border-cyan-500/50 bg-cyan-500/10 px-2.5 py-1.5">Administration Team</span>
-                <span className="rounded-lg border border-orange-400/50 bg-orange-500/10 px-2.5 py-1.5">Production Manager</span>
               </div>
             </div>
           </Link>
@@ -146,7 +144,7 @@ function Dashboard() {
         <section className="card p-6">
           <h2 className="text-lg font-bold">Recently viewed</h2>
           {recent.length === 0 ? (
-            <p className="mt-3 text-sm text-muted">Flows you open will appear here. Start with the organization chart.</p>
+            <p className="mt-3 text-sm text-muted">Flows you open will appear here. Start with the Group Structure.</p>
           ) : (
             <ul className="mt-4 space-y-1.5">
               {recent.slice(0, 5).map((r) => { const I = r.icon; return (
