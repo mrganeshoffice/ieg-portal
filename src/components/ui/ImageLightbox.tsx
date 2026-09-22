@@ -83,15 +83,14 @@ export default function ImageLightbox({ open, onClose, src, title, downloadName 
           {/* image stage */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
-            className="relative min-h-0 flex-1 touch-none select-none overflow-hidden"
+            className="relative flex min-h-0 flex-1 touch-none select-none items-center justify-center overflow-hidden"
             style={{ cursor: scale > 1 ? 'grab' : 'zoom-in' }}
             onWheel={onWheel} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp} onDoubleClick={onDoubleClick}
           >
             <motion.img
               src={src} alt={title} draggable={false}
               animate={{ x: pos.x, y: pos.y, scale }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="pointer-events-none absolute left-1/2 top-1/2 max-h-none max-w-none -translate-x-1/2 -translate-y-1/2 rounded-lg shadow-2xl"
-              style={{ width: 'min(92vw, 1600px)', height: 'auto' }}
+              className="pointer-events-none max-h-[85dvh] max-w-[92vw] rounded-lg object-contain shadow-2xl"
             />
           </motion.div>
 
