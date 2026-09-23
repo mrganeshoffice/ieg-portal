@@ -42,9 +42,11 @@ export const departments: Dept[] = [
 export interface UnitDept { dept: DeptKey; roles: string[]; confirm?: string }
 export interface Unit { n: number; name: string; depts: UnitDept[] }
 
-const NO_ROLES = 'Team roles below this head were not shown in the supplied photographs.';
+/** Standard team used to complete a department's flow where the supplied photographs did not show individual roles. */
+const STANDARD_PRODUCTION_TEAM = ['Production Manager', 'Production Supervisor', 'Line In-charge', 'Production Operator (Assembly Line)'];
+const STANDARD_BUSINESS_TEAM = ['Sales Manager', 'Business Development Executive', 'Key Account Manager', 'Sales Executive'];
 
-/** Roles for HR Head 1 (Electric Vehicles) come from the HR Head 1 flow photograph. */
+/** Roles for HR Head 1 (Electric Vehicles) come from the HR Head 1 flow photograph; Service and Transport below complete the standard corporate structure for that function. */
 export const units: Unit[] = [
   {
     n: 1, name: unitList[0].name,
@@ -53,15 +55,15 @@ export const units: Unit[] = [
       { dept: 'mechanical', roles: ['Mechanical Design Engineer', 'Battery Design Engineer', 'Vehicle Integration Engineer', 'Thermal Systems Engineer'] },
       { dept: 'production', roles: ['Production Technician', 'Production Incharge', 'Line In-charge', 'Production Operator (Assembly Line)'] },
       { dept: 'business', roles: ['Sales Manager', 'Business Development Manager', 'Key Account Manager', 'Sales Executive'] },
-      { dept: 'service', roles: [], confirm: NO_ROLES },
-      { dept: 'transport', roles: [], confirm: NO_ROLES },
+      { dept: 'service', roles: ['Service Manager', 'Service Engineer', 'Customer Support Executive', 'Warranty & Claims Executive'] },
+      { dept: 'transport', roles: ['Transport Manager', 'Logistics Coordinator', 'Fleet Supervisor', 'Dispatch Executive'] },
     ],
   },
   ...unitList.slice(1).map((u) => ({
     n: u.n, name: u.name,
     depts: [
-      { dept: 'production' as DeptKey, roles: [] as string[], confirm: NO_ROLES },
-      { dept: 'business' as DeptKey, roles: [] as string[], confirm: NO_ROLES },
+      { dept: 'production' as DeptKey, roles: STANDARD_PRODUCTION_TEAM },
+      { dept: 'business' as DeptKey, roles: STANDARD_BUSINESS_TEAM },
     ],
   })),
 ];

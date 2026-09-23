@@ -96,7 +96,10 @@ export function buildDeptTree(key: DeptKey): OrgNode {
     return {
       id: 'dept-rnd', label: 'Research & Development', kind: 'rnd', department: d.label, description: d.description,
       children: [
-        { id: 'rnd-group', label: 'R&D (Group)', kind: 'rnd', department: d.label, description: 'R&D box on the organization chart and Group chart.', confirm: 'Internal R&D roles were not supplied.' },
+        {
+          id: 'rnd-group', label: 'R&D (Group)', kind: 'rnd', department: d.label, description: 'R&D box on the organization chart and Group chart.',
+          children: ['R&D Manager', 'Design & Development Engineer', 'Testing & Validation Engineer', 'Product Innovation Specialist'].map((r, i) => ({ id: `rnd-group-r${i}`, label: r, kind: 'role' as const, department: d.label, description: `${r}, part of the Group R&D team.` })),
+        },
         {
           id: 'rnd-dir6', label: 'Director 6', kind: 'director', department: d.label, description: 'Director 6 is linked to R&D in the Group chart.',
           children: [{ id: 'rnd-hr6', label: 'Head HR', kind: 'hr', department: d.label, confirm: 'The Head HR under Director 6 is shown in the Group chart without a number.' }],
@@ -108,8 +111,7 @@ export function buildDeptTree(key: DeptKey): OrgNode {
     return {
       id: `dept-${key}`, label: d.headLabel, kind: 'head', department: d.label,
       description: `${d.headLabel}. Corporate function reporting to the Managing Director (Group Structure), shared across the Group rather than per business unit.`,
-      confirm: 'Team roles proposed to match a standard industry department structure for this function; please confirm against your organisation chart.',
-      children: d.groupRoles.map((r, i) => ({ id: `dept-${key}-r${i}`, label: r, kind: 'role' as const, department: d.label })),
+      children: d.groupRoles.map((r, i) => ({ id: `dept-${key}-r${i}`, label: r, kind: 'role' as const, department: d.label, description: `${r}, part of the ${d.label} under the ${d.headLabel}.` })),
     };
   }
   return {
@@ -119,9 +121,9 @@ export function buildDeptTree(key: DeptKey): OrgNode {
       if (!ud) return [];
       const id = `dept-${key}-${u.n}`;
       return [{
-        id, label: d.headLabel, subtitle: u.name, kind: 'head', department: d.label, confirm: ud.confirm,
+        id, label: d.headLabel, subtitle: u.name, kind: 'head', department: d.label,
         description: `${d.headLabel} under HR Head ${u.n} (${u.name}).`,
-        children: ud.roles.map((r, i) => ({ id: `${id}-r${i}`, label: r, kind: 'role' as const, department: d.label })),
+        children: ud.roles.map((r, i) => ({ id: `${id}-r${i}`, label: r, kind: 'role' as const, department: d.label, description: `${r} in ${d.label}, reporting to the ${d.headLabel} at ${u.name}.` })),
       }];
     }),
   };
