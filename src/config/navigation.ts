@@ -1,12 +1,13 @@
 import {
   LayoutDashboard, Building2, Users, Zap, Cog, Factory, Briefcase, Wrench, Truck, FlaskConical,
   Map, Ruler, ShieldCheck, Settings, LogOut, Info, Presentation,
+  Laptop, Calculator, Globe2, TrendingUp, Megaphone,
 } from 'lucide-react';
 import type { NavItem } from '@/types';
 import { units } from '@/data/common';
 import { departments } from '@/data/departments';
 
-const deptIcons = { electrical: Zap, mechanical: Cog, production: Factory, business: Briefcase, service: Wrench, transport: Truck, rnd: FlaskConical };
+const deptIcons = { electrical: Zap, mechanical: Cog, production: Factory, business: Briefcase, service: Wrench, transport: Truck, it: Laptop, account: Calculator, intlbiz: Globe2, finance: TrendingUp, pr: Megaphone, rnd: FlaskConical };
 
 /** Sidebar, breadcrumbs, search and dashboard are all driven from this list. Add an item here to add a page. */
 export const navItems: NavItem[] = [

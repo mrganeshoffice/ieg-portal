@@ -16,7 +16,7 @@ const cards = [
   { title: 'IEG Group Companies', desc: 'Group companies under the Parent Company and their Directors.', stat: `${subsidiaryCount} companies`, icon: Building2, path: '/group-structure', color: '#14B8A6' },
   { title: 'HR Heads', desc: 'One reporting flow per business unit, from Director to team roles.', stat: `${units.length} HR Head flows`, icon: Users, path: '/hr/1', color: '#EC4899' },
   { title: 'Directors', desc: 'Directors 1 to 6 and the business unit each one oversees.', stat: `${directorCount} directors`, icon: Crown, path: '/administration', color: '#F59E0B' },
-  { title: 'Departments', desc: 'Electrical, Mechanical, Production, Business, Service, Transport and R&D.', stat: `${departments.length} departments`, icon: Briefcase, path: '/departments/electrical', color: '#22A862' },
+  { title: 'Departments', desc: 'Functional departments across each business unit and the corporate office.', stat: `${departments.length} departments`, icon: Briefcase, path: '/departments/electrical', color: '#22A862' },
   { title: 'Production Units', desc: 'Production heads and line roles across every business unit.', stat: 'View Structure', icon: Factory, path: '/departments/production', color: '#F97316' },
   { title: 'R&D', desc: 'Group R&D function and the Director 6 line.', stat: 'View Structure', icon: FlaskConical, path: '/departments/rnd', color: '#10B981' },
   { title: 'Our Product PPT', desc: 'Explore product presentations and technical information.', stat: 'Presentations', icon: Presentation, path: '/product-ppt', color: '#1FA2E8', cta: 'View Presentations' },
@@ -34,9 +34,10 @@ function Dashboard() {
   const quick = ['/group-structure', '/hr/1', '/factory-layout', '/factory-dimensions', '/administration', '/product-ppt'].map((p) => navItems.find((n) => n.path === p)!);
 
   const distribution = departments.map((d) => {
+    if (d.key === 'rnd' || d.groupRoles) return { d, count: 1, roles: d.groupRoles?.length ?? 0 };
     const present = units.filter((u) => u.depts.some((x) => x.dept === d.key));
     const roles = present.reduce((s, u) => s + (u.depts.find((x) => x.dept === d.key)?.roles.length ?? 0), 0);
-    return { d, count: d.key === 'rnd' ? 1 : present.length, roles };
+    return { d, count: present.length, roles };
   });
 
   return (
@@ -129,10 +130,10 @@ function Dashboard() {
                 <Link to={`/departments/${d.key}`} className="group block">
                   <div className="mb-1 flex items-baseline justify-between text-sm">
                     <span className="font-semibold group-hover:text-brand">{d.key === 'rnd' ? 'Research & Development' : d.label.replace(' Department', '')}</span>
-                    <span className="text-xs text-muted">{d.key === 'rnd' ? 'Group + Director 6' : `${count} of ${units.length} units`}{roles ? ` · ${roles} roles mapped` : ''}</span>
+                    <span className="text-xs text-muted">{d.key === 'rnd' ? 'Group + Director 6' : d.groupRoles ? 'Group function' : `${count} of ${units.length} units`}{roles ? ` · ${roles} roles mapped` : ''}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-line/70">
-                    <motion.div className="h-full rounded-full bg-gradient-to-r from-brand to-leaf" initial={{ width: 0 }} animate={{ width: `${(d.key === 'rnd' ? 1 : count / units.length) * 100}%` }} transition={{ duration: 0.8, delay: 0.3 }} />
+                    <motion.div className="h-full rounded-full bg-gradient-to-r from-brand to-leaf" initial={{ width: 0 }} animate={{ width: `${(d.key === 'rnd' || d.groupRoles ? 1 : count / units.length) * 100}%` }} transition={{ duration: 0.8, delay: 0.3 }} />
                   </div>
                 </Link>
               </li>

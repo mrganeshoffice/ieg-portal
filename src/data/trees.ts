@@ -104,6 +104,14 @@ export function buildDeptTree(key: DeptKey): OrgNode {
       ],
     };
   }
+  if (d.groupRoles) {
+    return {
+      id: `dept-${key}`, label: d.headLabel, kind: 'head', department: d.label,
+      description: `${d.headLabel}. Corporate function reporting to the Managing Director (Group Structure), shared across the Group rather than per business unit.`,
+      confirm: 'Team roles proposed to match a standard industry department structure for this function; please confirm against your organisation chart.',
+      children: d.groupRoles.map((r, i) => ({ id: `dept-${key}-r${i}`, label: r, kind: 'role' as const, department: d.label })),
+    };
+  }
   return {
     id: `dept-${key}`, label: d.label, kind: 'head', department: d.label, description: d.description,
     children: units.flatMap((u): OrgNode[] => {
