@@ -16,6 +16,21 @@ const SUBSIDIARY_IMAGES: Record<number, string> = {
   5: '/subsidiary-5-retro-energies-productions.jpg',
 };
 
+const DEPT_IMAGES: Partial<Record<DeptKey, string>> = {
+  electrical: '/dept-electrical.jpg',
+  mechanical: '/dept-mechanical.jpg',
+  production: '/dept-production.jpg',
+  business: '/dept-business.jpg',
+  service: '/dept-service.jpg',
+  transport: '/dept-transport.jpg',
+  it: '/dept-it.jpg',
+  account: '/dept-account.jpg',
+  pr: '/dept-pr.jpg',
+  finance: '/dept-finance.jpg',
+  rnd: '/dept-rnd.jpg',
+  intlbiz: '/dept-intlbiz.jpg',
+};
+
 type Kind = 'group' | 'hr' | 'dept' | 'admin';
 
 export default function ChartPage({ kind }: { kind: Kind }) {
@@ -27,7 +42,7 @@ export default function ChartPage({ kind }: { kind: Kind }) {
       case 'hr': { const r = hrTrees[Number(n)]; return { title: r ? r.label : `HR Head ${n} Flow`, desc: r ? `${r.label}: Director ${n} → HR Head ${n} → department heads and teams.` : '', root: r, imageUrl: SUBSIDIARY_IMAGES[Number(n)] }; }
       case 'dept': {
         const ok = departments.some((d) => d.key === key);
-        return ok ? { title: deptByKey(key as DeptKey).label, desc: deptByKey(key as DeptKey).description, root: deptTrees[key as DeptKey] } : { title: '', desc: '' };
+        return ok ? { title: deptByKey(key as DeptKey).label, desc: deptByKey(key as DeptKey).description, root: deptTrees[key as DeptKey], imageUrl: DEPT_IMAGES[key as DeptKey] } : { title: '', desc: '' };
       }
     }
   }, [kind, n, key]);
