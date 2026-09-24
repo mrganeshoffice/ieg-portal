@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Box, Compass, Pause, Play, RotateCcw, Route, X, Zap } from 'lucide-react';
+import { AlertTriangle, Box, Compass, ExternalLink, Pause, Play, RotateCcw, Route, X, Youtube, Zap } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import Gate from '@/components/ui/Gate';
 import FactoryPlan, { STEP_LABELS, type Seek } from '@/components/factory/FactoryPlan';
@@ -28,6 +28,43 @@ function Content() {
       <div className="mb-4 flex flex-wrap gap-2">
         {facts.map(([k, v]) => <span key={k} className="card !rounded-2xl px-4 py-2.5 text-sm"><span className="text-muted">{k}: </span><b>{v}</b></span>)}
       </div>
+
+      <a
+        href="https://youtu.be/sUVTzLRXfXc?si=2uMlMpIIrf9MQ8eZ" target="_blank" rel="noopener noreferrer"
+        aria-label="Watch the IEG factory walkthrough video on YouTube (opens in a new tab)"
+        className="group relative mb-5 block overflow-hidden rounded-3xl border border-line shadow-soft transition-shadow duration-300 hover:shadow-glow"
+      >
+        <div className="relative aspect-[16/7] w-full overflow-hidden sm:aspect-[16/6]">
+          <img src="/factory-video-thumbnail.jpg" alt="IEG Auto Power Ltd factory floor — production lines, robotics and material flow" loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-navy-950/90 via-navy-950/25 to-navy-950/10" />
+          <div className="absolute inset-0 bg-grid opacity-30" />
+
+          {/* play button */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="relative flex h-16 w-16 items-center justify-center sm:h-[4.5rem] sm:w-[4.5rem]">
+              <span className="absolute inset-0 rounded-full bg-white/25 [animation-duration:2.4s] motion-safe:animate-ping" />
+              <span className="absolute inset-0 rounded-full bg-gradient-to-br from-brand to-leaf shadow-glow transition-transform duration-300 group-hover:scale-110" />
+              <Play size={26} fill="currentColor" className="relative z-10 ml-0.5 text-white drop-shadow sm:h-8 sm:w-8" />
+            </span>
+          </div>
+
+          {/* caption */}
+          <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-3 p-4 sm:p-6">
+            <div className="min-w-0">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white backdrop-blur">
+                <Youtube size={13} /> Factory Video
+              </span>
+              <h2 className="mt-2 text-base font-extrabold leading-tight text-white sm:text-xl">Inside the IEG Factory — Full Walkthrough</h2>
+              <p className="mt-0.5 text-xs text-white/70 sm:text-sm">See the production lines, robotics and material flow in action.</p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90 backdrop-blur transition group-hover:border-white/50 group-hover:bg-white/20">
+              Watch on YouTube <ExternalLink size={13} />
+            </span>
+          </div>
+        </div>
+      </a>
+
       <div role="tablist" className="mb-4 inline-flex rounded-xl border border-line bg-surface p-1">
         {([['plan', 'Plan & flow'], ['vastu', 'Vastu guide']] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${tab === k ? 'bg-navy-900 text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
