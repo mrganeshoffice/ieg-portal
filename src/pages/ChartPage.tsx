@@ -8,6 +8,14 @@ import { countConfirm } from '@/data/confirmations';
 import { deptByKey, departments, type DeptKey } from '@/data/departments';
 import type { OrgNode } from '@/types';
 
+const SUBSIDIARY_IMAGES: Record<number, string> = {
+  1: '/subsidiary-1-mega-industrial-power.jpg',
+  2: '/subsidiary-2-smart-homes-energies.jpg',
+  3: '/subsidiary-3-ev-urja.jpg',
+  4: '/subsidiary-4-universal-energies.jpg',
+  5: '/subsidiary-5-retro-energies-productions.jpg',
+};
+
 type Kind = 'group' | 'hr' | 'dept' | 'admin';
 
 export default function ChartPage({ kind }: { kind: Kind }) {
@@ -16,7 +24,7 @@ export default function ChartPage({ kind }: { kind: Kind }) {
     switch (kind) {
       case 'group': return { title: 'IEG Group Structure', desc: 'Reporting hierarchy under the Managing Director, with functional heads and business units.', root: groupStructure, imageUrl: '/group-structure-infographic.png' };
       case 'admin': return { title: 'Administration Structure', desc: 'Administration Team, Directors, HR and compliance roles.', root: adminTree };
-      case 'hr': { const r = hrTrees[Number(n)]; return { title: r ? r.label : `HR Head ${n} Flow`, desc: r ? `${r.label}: Director ${n} → HR Head ${n} → department heads and teams.` : '', root: r }; }
+      case 'hr': { const r = hrTrees[Number(n)]; return { title: r ? r.label : `HR Head ${n} Flow`, desc: r ? `${r.label}: Director ${n} → HR Head ${n} → department heads and teams.` : '', root: r, imageUrl: SUBSIDIARY_IMAGES[Number(n)] }; }
       case 'dept': {
         const ok = departments.some((d) => d.key === key);
         return ok ? { title: deptByKey(key as DeptKey).label, desc: deptByKey(key as DeptKey).description, root: deptTrees[key as DeptKey] } : { title: '', desc: '' };
