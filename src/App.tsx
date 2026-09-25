@@ -11,6 +11,7 @@ import AboutPage from './pages/AboutPage';
 import SettingsPage from './pages/SettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProductPresentationsPage from './pages/ProductPresentationsPage';
+import OrganisationFlowPage from './pages/OrganisationFlowPage';
 
 const FactoryLayoutPage = lazy(() => import('./pages/FactoryLayoutPage'));
 const FactoryDimensionsPage = lazy(() => import('./pages/FactoryDimensionsPage'));
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="about" element={<AboutPage />} />
           <Route path="org-chart" element={<Navigate to="/group-structure" replace />} />
           <Route path="group-structure" element={<ChartPage kind="group" />} />
+          <Route path="organisation-flow" element={<OrganisationFlowPage />} />
           <Route path="hr/:n" element={<ChartPage kind="hr" />} />
           <Route path="departments/:key" element={<ChartPage kind="dept" />} />
           <Route path="product-ppt" element={<ProductPresentationsPage />} />
