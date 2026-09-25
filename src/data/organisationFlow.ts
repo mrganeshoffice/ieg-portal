@@ -27,7 +27,7 @@ export const flowSectionMeta: Record<FlowSection, { label: string; blurb: string
     blurb: 'IEG Auto Power Ltd — Directors, Management, Department Heads, Admin/HR/Compliance and Business Units.',
   },
   company: {
-    label: 'Company Structures',
+    label: 'Subsidiary Companies Structures',
     blurb: 'Per-company reporting line: Director → HR Head → Department Heads and their teams.',
   },
   department: {
@@ -45,6 +45,8 @@ export const organisationFlowItems: FlowItem[] = [
   { id: 'company-mega-industrial-power', title: 'IEG Mega Industrial Power Pvt.Ltd', description: 'Director 1 → HR Head 1 → Electrical, Mechanical, Production, Business, Service and Transporter Heads with their teams.', section: 'company', order: 1, image: '/organisation-flow/02-company-mega-industrial-power.jpg' },
   { id: 'company-smart-homes-energies', title: 'IEG Smart Homes Energies Pvt. Ltd', description: 'Director 2 → HR Head 2 → Production and Business Heads with their teams.', section: 'company', order: 2, image: '/organisation-flow/03-company-smart-homes-energies.jpg' },
   { id: 'company-ev-urja', title: 'IEG EV Urja Pvt. Ltd', description: 'Director 3 → HR Head 3 → Production and Business Heads with their teams.', section: 'company', order: 3, image: '/organisation-flow/04-company-ev-urja.jpg' },
+  { id: 'company-universal-energies', title: 'IEG Universal Energies Pvt. Ltd', description: 'Director 4 → HR Head 4 → Production and Business Heads with their teams.', section: 'company', order: 4, image: '/organisation-flow/17-company-universal-energies.jpg' },
+  { id: 'company-retro-energies-productions', title: 'IEG Retro Energies Productions Pvt. Ltd', description: 'Director 5 → HR Head 5 → Production and Business Heads with their teams.', section: 'company', order: 5, image: '/organisation-flow/18-company-retro-energies-productions.jpg' },
 
   { id: 'dept-electrical', title: 'Electrical Department', description: 'Electrical Head with Battery Technology, Power Electronics, Charging Infrastructure, Service & Maintenance and Manufacturing & Testing Engineers.', section: 'department', order: 1, image: '/organisation-flow/05-dept-electrical.jpg' },
   { id: 'dept-mechanical', title: 'Mechanical Department', description: 'Mechanical Head with Mechanical Design, Battery Design, Integration and Thermal Systems Engineers.', section: 'department', order: 2, image: '/organisation-flow/06-dept-mechanical.jpg' },
