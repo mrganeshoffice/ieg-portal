@@ -23,7 +23,7 @@ export default function StoryTimeline() {
             initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06, duration: 0.35 }}
             className="relative"
           >
-            <span className="absolute -left-[1.72rem] top-1 h-3 w-3 rounded-full bg-gradient-to-br from-brand to-leaf ring-4 ring-surface" />
+            <span className="node-pulse absolute -left-[1.72rem] top-1 h-3 w-3 rounded-full bg-gradient-to-br from-brand to-leaf shadow-glow ring-4 ring-surface" style={{ animationDelay: `${i * 0.15}s` }} />
             <span className="inline-block rounded-lg bg-brand/10 px-2.5 py-1 text-xs font-extrabold tracking-wide text-brand-600">{j.year}</span>
             <h3 className="mt-1.5 text-sm font-bold text-ink">{j.title}</h3>
             <p className="mt-0.5 max-w-2xl text-sm leading-relaxed text-muted">{j.text}</p>

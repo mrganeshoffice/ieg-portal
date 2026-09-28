@@ -23,7 +23,7 @@ const appIcons: Record<string, typeof Bike> = {
   'Solar': Sun,
 };
 
-/** Verified application areas, shown as an icon card grid. */
+/** Verified application areas, shown as an icon card grid with elevation + glow on hover. */
 export default function ApplicationsGrid() {
   return (
     <motion.section
@@ -44,9 +44,11 @@ export default function ApplicationsGrid() {
             <motion.div
               key={a}
               initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: Math.min(i, 10) * 0.04, duration: 0.3 }}
-              className="flex flex-col items-center gap-2 rounded-2xl border border-line bg-app px-3 py-4 text-center transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-soft"
+              className="group flex flex-col items-center gap-2 rounded-2xl border border-line bg-app px-3 py-4 text-center transition duration-300 hover:-translate-y-1 hover:border-brand/40 hover:bg-surface hover:shadow-glow"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand/15 to-leaf/15 text-brand"><Icon size={18} /></span>
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand/15 to-leaf/15 text-brand shadow-soft transition duration-300 group-hover:scale-110 group-hover:from-brand/25 group-hover:to-leaf/25">
+                <Icon size={19} />
+              </span>
               <span className="text-xs font-semibold leading-tight text-ink">{a}</span>
             </motion.div>
           );

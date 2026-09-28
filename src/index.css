@@ -46,3 +46,15 @@ body { @apply bg-app font-sans text-ink antialiased; }
 
 @keyframes zone-pulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
 .zone-pulse { animation: zone-pulse 1.3s ease-in-out infinite; }
+
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+@keyframes spin-slow-reverse { to { transform: rotate(-360deg); } }
+.orbit-cw { animation: spin-slow 22s linear infinite; transform-origin: center; }
+.orbit-ccw { animation: spin-slow-reverse 30s linear infinite; transform-origin: center; }
+
+@keyframes node-pulse { 0%, 100% { opacity: .55; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.15); } }
+.node-pulse { animation: node-pulse 2.4s ease-in-out infinite; transform-origin: center; }
+
+@keyframes core-glow { 0%, 100% { filter: drop-shadow(0 0 10px rgba(31,162,232,.55)) drop-shadow(0 0 26px rgba(52,199,123,.25)); } 50% { filter: drop-shadow(0 0 18px rgba(31,162,232,.8)) drop-shadow(0 0 38px rgba(52,199,123,.4)); } }
+.core-glow { animation: core-glow 3s ease-in-out infinite; }
+

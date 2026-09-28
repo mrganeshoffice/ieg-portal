@@ -14,6 +14,7 @@ export default function ClosingCta() {
       <div className="absolute inset-0 bg-grid" />
       <div className="absolute -left-16 top-0 h-56 w-56 rounded-full bg-leaf/20 blur-[90px]" />
       <div className="absolute -right-16 bottom-0 h-56 w-56 rounded-full bg-brand/25 blur-[90px]" />
+      <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-brand/10 to-leaf/10 blur-[100px]" />
 
       <div className="relative flex flex-col items-start gap-5 md:flex-row md:items-center md:justify-between">
         <div>
