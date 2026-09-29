@@ -12,11 +12,13 @@ import SettingsPage from './pages/SettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProductPresentationsPage from './pages/ProductPresentationsPage';
 import OrganisationFlowPage from './pages/OrganisationFlowPage';
+import VideosPage from './pages/VideosPage';
 
 const FactoryLayoutPage = lazy(() => import('./pages/FactoryLayoutPage'));
 const FactoryDimensionsPage = lazy(() => import('./pages/FactoryDimensionsPage'));
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const AdminVideosPage = lazy(() => import('./pages/AdminVideosPage'));
 
 /** Admin auth is a separate provider, mounted only for /admin/* routes. */
 function AdminShell() {
@@ -38,6 +40,7 @@ export default function App() {
         <Route element={<AdminShell />}>
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboardPage /></AdminProtectedRoute>} />
+          <Route path="/admin/videos" element={<AdminProtectedRoute><AdminVideosPage /></AdminProtectedRoute>} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
         <Route element={<Protected><AppLayout /></Protected>}>
@@ -49,6 +52,7 @@ export default function App() {
           <Route path="hr/:n" element={<ChartPage kind="hr" />} />
           <Route path="departments/:key" element={<ChartPage kind="dept" />} />
           <Route path="product-ppt" element={<ProductPresentationsPage />} />
+          <Route path="videos" element={<VideosPage />} />
           <Route path="administration" element={<ChartPage kind="admin" />} />
           <Route path="factory-layout" element={<FactoryLayoutPage />} />
           <Route path="factory-dimensions" element={<FactoryDimensionsPage />} />

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Presentation, Briefcase, Building2, Crown, FlaskConical, Factory, Map, Search, ShieldCheck, Users } from 'lucide-react';
+import { ArrowRight, Presentation, Briefcase, Building2, Clapperboard, Crown, FlaskConical, Factory, Map, Search, ShieldCheck, Users } from 'lucide-react';
 import { navItems } from '@/config/navigation';
 import { directorCount, subsidiaryCount, units as unitList } from '@/data/common';
 import { departments, units } from '@/data/departments';
@@ -20,6 +20,7 @@ const cards = [
   { title: 'Production Units', desc: 'Production heads and line roles across every business unit.', stat: 'View Structure', icon: Factory, path: '/departments/production', color: '#F97316' },
   { title: 'R&D', desc: 'Group R&D function and the Director 6 line.', stat: 'View Structure', icon: FlaskConical, path: '/departments/rnd', color: '#10B981' },
   { title: 'Our Product PPT', desc: 'Explore product presentations and technical information.', stat: 'Presentations', icon: Presentation, path: '/product-ppt', color: '#1FA2E8', cta: 'View Presentations' },
+  { title: 'Videos', desc: 'Watch product, training and event videos from IEG Auto Power Ltd.', stat: 'View Structure', icon: Clapperboard, path: '/videos', color: '#8B5CF6', cta: 'Watch Videos' },
   { title: 'Administration Team', desc: 'Administration, HR Director, Legal, CA and CS.', stat: 'View Structure', icon: ShieldCheck, path: '/administration', color: '#0EA5A4' },
 ];
 

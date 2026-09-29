@@ -1,6 +1,7 @@
 /**
  * Local / self-hosted server adapter. Zero dependencies (Node 18+).
- * Stores presentations in server/data/presentations.json and thumbnails in server/data/uploads/.
+ * Stores presentations in server/data/presentations.json, videos in server/data/videos.json,
+ * and thumbnails in server/data/uploads/.
  * Admin accounts live in server/data/admin.json as salted scrypt hashes (create with `npm run admin:create`).
  */
 import { randomBytes } from 'node:crypto';
@@ -14,6 +15,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DATA_DIR = process.env.IEG_DATA_DIR || path.join(HERE, 'data');
 const UPLOADS = path.join(DATA_DIR, 'uploads');
 const DB_FILE = path.join(DATA_DIR, 'presentations.json');
+const VIDEOS_FILE = path.join(DATA_DIR, 'videos.json');
 const ADMIN_FILE = path.join(DATA_DIR, 'admin.json');
 const KEY_FILE = path.join(DATA_DIR, 'session.key');
 
@@ -33,20 +35,29 @@ async function fileSecret() {
   return secretKey;
 }
 
-let queue = Promise.resolve();
-const locked = (fn) => { const run = queue.then(fn); queue = run.catch(() => {}); return run; };
-async function readDb() { try { const d = JSON.parse(await readFile(DB_FILE, 'utf8')); return Array.isArray(d) ? d : []; } catch { return []; } }
-async function writeDb(rows) { const tmp = `${DB_FILE}.${process.pid}.tmp`; await writeFile(tmp, JSON.stringify(rows, null, 2)); await rename(tmp, DB_FILE); }
+/** One JSON-file-backed collection, with a write queue so concurrent saves never interleave. */
+function jsonCollection(file) {
+  let queue = Promise.resolve();
+  const locked = (fn) => { const run = queue.then(fn); queue = run.catch(() => {}); return run; };
+  async function readDb() { try { const d = JSON.parse(await readFile(file, 'utf8')); return Array.isArray(d) ? d : []; } catch { return []; } }
+  async function writeDb(rows) { const tmp = `${file}.${process.pid}.tmp`; await writeFile(tmp, JSON.stringify(rows, null, 2)); await rename(tmp, file); }
+  return {
+    list: () => readDb(),
+    get: async (id) => (await readDb()).find((r) => r.id === id) ?? null,
+    put: (row) => locked(async () => { const rows = await readDb(); const i = rows.findIndex((r) => r.id === row.id); if (i === -1) rows.push(row); else rows[i] = row; await writeDb(rows); }),
+    remove: (id) => locked(async () => { await writeDb((await readDb()).filter((r) => r.id !== id)); }),
+  };
+}
 
+const presentationsDb = jsonCollection(DB_FILE);
+const videosDb = jsonCollection(VIDEOS_FILE);
 const fileStorage = {
-  list: () => readDb(),
-  get: async (id) => (await readDb()).find((r) => r.id === id) ?? null,
-  put: (row) => locked(async () => { const rows = await readDb(); const i = rows.findIndex((r) => r.id === row.id); if (i === -1) rows.push(row); else rows[i] = row; await writeDb(rows); }),
-  remove: (id) => locked(async () => { await writeDb((await readDb()).filter((r) => r.id !== id)); }),
+  ...presentationsDb,
   putImage: (name, buf) => writeFile(path.join(UPLOADS, name), buf),
   getImage: (name) => readFile(path.join(UPLOADS, name)).catch(() => null),
   removeImage: (name) => unlink(path.join(UPLOADS, name)).catch(() => {}),
 };
+const videoStorage = { ...videosDb };
 
 /* live updates (Server-Sent Events) */
 const clients = new Set();
@@ -64,7 +75,7 @@ function readBody(req, limit) {
 
 export async function createApiHandler() {
   await mkdir(UPLOADS, { recursive: true });
-  const core = createCore({ storage: fileStorage, getAdmins: readAdmins, getSecret: fileSecret, onChange: broadcast });
+  const core = createCore({ storage: fileStorage, videoStorage, getAdmins: readAdmins, getSecret: fileSecret, onChange: broadcast });
 
   return async function handler(req, res, next) {
     let url;

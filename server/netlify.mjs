@@ -1,22 +1,34 @@
 /** Netlify adapter: same API as the local server, storage in Netlify Blobs, admin accounts from environment variables. */
 import { HttpError, createCore } from './core.mjs';
 
-/** rows / images are Netlify Blobs stores (or anything with the same get/set/list/delete methods). */
-export function blobsStorage({ rows, images }) {
-  const toAB = (b) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+/** rows / images are Netlify Blobs stores (or anything with the same get/set/list/delete methods).
+ * `prefix` namespaces a resource's keys inside the shared `rows` store ('p/' presentations, 'v/' videos). */
+function rowsCollection(rows, prefix) {
   return {
     async list() {
       const keys = [];
-      for await (const page of rows.list({ prefix: 'p/', paginate: true })) for (const b of page.blobs) keys.push(b.key);
+      for await (const page of rows.list({ prefix, paginate: true })) for (const b of page.blobs) keys.push(b.key);
       return (await Promise.all(keys.map((k) => rows.get(k, { type: 'json' })))).filter(Boolean);
     },
-    get: async (id) => (await rows.get(`p/${id}`, { type: 'json' })) ?? null,
-    put: (row) => rows.setJSON(`p/${row.id}`, row),
-    remove: (id) => rows.delete(`p/${id}`),
+    get: async (id) => (await rows.get(`${prefix}${id}`, { type: 'json' })) ?? null,
+    put: (row) => rows.setJSON(`${prefix}${row.id}`, row),
+    remove: (id) => rows.delete(`${prefix}${id}`),
+  };
+}
+
+export function blobsStorage({ rows, images }) {
+  const toAB = (b) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+  return {
+    ...rowsCollection(rows, 'p/'),
     putImage: (name, buf) => images.set(name, toAB(buf)),
     getImage: async (name) => { const ab = await images.get(name, { type: 'arrayBuffer' }); return ab ? Buffer.from(ab) : null; },
     removeImage: (name) => images.delete(name),
   };
+}
+
+/** Same `rows` store as presentations, namespaced under 'v/' so both collections coexist without a second Blobs store. */
+export function blobsVideoStorage({ rows }) {
+  return rowsCollection(rows, 'v/');
 }
 
 /** Admins come from the ADMINS_JSON environment variable (set in Netlify > Site configuration > Environment variables). */
@@ -30,7 +42,7 @@ function adminsFrom(env) {
 export function createNetlifyHandler({ getStorage, env = process.env }) {
   let core = null;
   const build = () => core ??= createCore({
-    storage: getStorage(),
+    ...getStorage(),
     getAdmins: async () => adminsFrom(env),
     getSecret: async () => {
       const s = env.SESSION_SECRET;

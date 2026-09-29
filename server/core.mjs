@@ -3,6 +3,7 @@
  *   - server/api.mjs      : local dev / self-hosted server (files on disk)
  *   - server/netlify.mjs  : Netlify Function (Netlify Blobs)
  * A "storage" adapter provides: list, get, put, remove, putImage, getImage, removeImage.
+ * `videoStorage` provides the same list/get/put/remove for the Videos module (images are shared).
  */
 import { createHmac, randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
@@ -45,6 +46,23 @@ function clean(body, partial) {
   if (has('is_published')) { if (typeof body.is_published !== 'boolean') bad('Invalid status.'); out.is_published = body.is_published; }
   return out;
 }
+/** Same shape as `clean`, for the Videos module: title + video_url are required; thumbnail_url and category are optional. */
+function cleanVideo(body, partial) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) bad('Invalid request.');
+  const has = (k) => Object.prototype.hasOwnProperty.call(body, k);
+  const out = {};
+  if (!partial || has('title')) { const t = typeof body.title === 'string' ? body.title.trim() : ''; if (!t || t.length > 120) bad('Title must be 1 to 120 characters.'); out.title = t; }
+  if (!partial || has('video_url')) { const u = typeof body.video_url === 'string' ? body.video_url.trim() : ''; if (!validUrl(u)) bad('Enter a valid video link starting with https:// (YouTube, Vimeo, a direct video file, or a portal path).'); out.video_url = u; }
+  if (has('category')) { const c = body.category == null ? '' : typeof body.category === 'string' ? body.category.trim() : bad('Invalid category.'); if (c.length > 60) bad('Category must be 60 characters or fewer.'); out.category = c || null; }
+  if (has('thumbnail_url')) {
+    const t = body.thumbnail_url == null ? '' : typeof body.thumbnail_url === 'string' ? body.thumbnail_url : bad('Invalid thumbnail.');
+    if (t && (!t.startsWith('/uploads/') || !FILE_RE.test(t.slice(9)))) bad('Upload a valid thumbnail image.');
+    out.thumbnail_url = t || null;
+  }
+  if (has('display_order')) { const n = Number(body.display_order); if (!Number.isInteger(n) || n < 0 || n > 999999) bad('Display order must be a whole number from 0 to 999999.'); out.display_order = n; }
+  if (has('is_published')) { if (typeof body.is_published !== 'boolean') bad('Invalid status.'); out.is_published = body.is_published; }
+  return out;
+}
 function sniff(buf) {
   if (buf.length > 12 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg';
   if (buf.length > 12 && buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'png';
@@ -52,7 +70,7 @@ function sniff(buf) {
   return null;
 }
 
-export function createCore({ storage, getAdmins, getSecret, onChange = () => {} }) {
+export function createCore({ storage, videoStorage, getAdmins, getSecret, onChange = () => {} }) {
   /* ---- sessions: HMAC-signed httpOnly cookie ---- */
   async function sign(payload) { const body = b64(JSON.stringify(payload)); return `${body}.${createHmac('sha256', await getSecret()).update(body).digest('base64url')}`; }
   async function verify(token) {
@@ -90,7 +108,12 @@ export function createCore({ storage, getAdmins, getSecret, onChange = () => {} 
     if (raw.length > limit) throw new HttpError(413, 'That request is too large.');
     try { return raw.length ? JSON.parse(raw.toString('utf8')) : {}; } catch { throw new HttpError(400, 'Invalid JSON.'); }
   }
-  const inUse = async (url, exceptId) => (await storage.list()).some((x) => x.id !== exceptId && x.thumbnail_url === url);
+  /** An upload is "in use" if any presentation OR any video still references it. Checked before deleting a file. */
+  const inUse = async (url, exceptId) => {
+    if (!url) return false;
+    const [pres, vids] = await Promise.all([storage.list(), videoStorage.list()]);
+    return pres.some((x) => x.id !== exceptId && x.thumbnail_url === url) || vids.some((x) => x.id !== exceptId && x.thumbnail_url === url);
+  };
   const removeUpload = async (url) => { const f = String(url || '').replace(/^\/uploads\//, ''); if (FILE_RE.test(f)) await storage.removeImage(f); };
 
   async function serveUpload(r) {
@@ -112,6 +135,7 @@ export function createCore({ storage, getAdmins, getSecret, onChange = () => {} 
     }
 
     if (m === 'GET' && p === '/api/presentations') return json(200, (await storage.list()).filter((x) => x.is_published).sort(byOrder).map((x) => ({ ...x, created_by: null })));
+    if (m === 'GET' && p === '/api/videos') return json(200, (await videoStorage.list()).filter((x) => x.is_published).sort(byOrder).map((x) => ({ ...x, created_by: null })));
     if (m === 'GET' && p === '/api/admin/status') return json(200, { adminConfigured: (await getAdmins()).length > 0 });
 
     if (m === 'POST' && p === '/api/admin/login') {
@@ -132,12 +156,20 @@ export function createCore({ storage, getAdmins, getSecret, onChange = () => {} 
 
     if (m === 'GET' && p === '/api/admin/me') return json(200, admin);
     if (m === 'GET' && p === '/api/admin/presentations') return json(200, (await storage.list()).sort(byOrder));
+    if (m === 'GET' && p === '/api/admin/videos') return json(200, (await videoStorage.list()).sort(byOrder));
 
     if (m === 'POST' && p === '/api/admin/presentations') {
       const data = clean(readJson(r), false);
       const now = new Date().toISOString();
       const row = { id: randomUUID(), title: data.title, description: data.description, thumbnail_url: data.thumbnail_url, presentation_url: data.presentation_url, display_order: data.display_order ?? 0, is_published: data.is_published ?? true, created_at: now, updated_at: now, created_by: admin.email };
       await storage.put(row); onChange();
+      return json(201, row);
+    }
+    if (m === 'POST' && p === '/api/admin/videos') {
+      const data = cleanVideo(readJson(r), false);
+      const now = new Date().toISOString();
+      const row = { id: randomUUID(), title: data.title, video_url: data.video_url, thumbnail_url: data.thumbnail_url ?? null, category: data.category ?? null, display_order: data.display_order ?? 0, is_published: data.is_published ?? true, created_at: now, updated_at: now, created_by: admin.email };
+      await videoStorage.put(row); onChange();
       return json(201, row);
     }
 
@@ -148,6 +180,16 @@ export function createCore({ storage, getAdmins, getSecret, onChange = () => {} 
       for (const v of map.values()) if (!Number.isInteger(v) || v < 0 || v > 999999) bad('Invalid order.');
       const now = new Date().toISOString();
       await Promise.all([...map].map(async ([id, display_order]) => { const row = await storage.get(id); if (row) await storage.put({ ...row, display_order, updated_at: now }); }));
+      onChange();
+      return json(200, { ok: true });
+    }
+    if (m === 'PUT' && p === '/api/admin/videos/order') {
+      const b = readJson(r);
+      if (!Array.isArray(b.order) || b.order.length > 2000) bad('Invalid order.');
+      const map = new Map(b.order.map((o) => [String(o?.id), Number(o?.display_order)]));
+      for (const v of map.values()) if (!Number.isInteger(v) || v < 0 || v > 999999) bad('Invalid order.');
+      const now = new Date().toISOString();
+      await Promise.all([...map].map(async ([id, display_order]) => { const row = await videoStorage.get(id); if (row) await videoStorage.put({ ...row, display_order, updated_at: now }); }));
       onChange();
       return json(200, { ok: true });
     }
@@ -173,6 +215,27 @@ export function createCore({ storage, getAdmins, getSecret, onChange = () => {} 
       return json(200, { ok: true });
     }
 
+    const oneVideo = /^\/api\/admin\/videos\/([0-9a-f-]{36})$/.exec(p);
+    if (oneVideo && m === 'PATCH') {
+      const data = cleanVideo(readJson(r), true);
+      const row = await videoStorage.get(oneVideo[1]);
+      if (!row) throw new HttpError(404, 'That video no longer exists.');
+      const old = row.thumbnail_url;
+      const next = { ...row, ...data, updated_at: new Date().toISOString() };
+      await videoStorage.put(next);
+      if (Object.prototype.hasOwnProperty.call(data, 'thumbnail_url') && data.thumbnail_url !== old && !(await inUse(old, row.id))) await removeUpload(old); // replaced or cleared image
+      onChange();
+      return json(200, next);
+    }
+    if (oneVideo && m === 'DELETE') {
+      const row = await videoStorage.get(oneVideo[1]);
+      if (!row) throw new HttpError(404, 'That video no longer exists.');
+      await videoStorage.remove(row.id);
+      if (!(await inUse(row.thumbnail_url, row.id))) await removeUpload(row.thumbnail_url);
+      onChange();
+      return json(200, { ok: true });
+    }
+
     if (m === 'POST' && p === '/api/admin/thumbnails') {
       const b = readJson(r, MAX_BODY);
       if (typeof b.data !== 'string') bad('No image received.');
@@ -189,7 +252,7 @@ export function createCore({ storage, getAdmins, getSecret, onChange = () => {} 
     if (th && m === 'DELETE') {
       let f; try { f = decodeURIComponent(th[1]); } catch { bad('Invalid file.'); }
       if (!FILE_RE.test(f)) bad('Invalid file.');
-      if (!(await inUse(`/uploads/${f}`))) await storage.removeImage(f); // never delete an image a presentation still uses
+      if (!(await inUse(`/uploads/${f}`))) await storage.removeImage(f); // never delete an image a presentation or video still uses
       return json(200, { ok: true });
     }
     throw new HttpError(404, 'Not found.');

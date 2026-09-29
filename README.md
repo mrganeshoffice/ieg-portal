@@ -17,6 +17,10 @@ Serve dist/ with SPA fallback (all routes -> index.html).
 
 User page: `/product-ppt` (sidebar + dashboard card). Admin: `/admin/login` -> `/admin/dashboard` (not linked anywhere in the portal).
 
+## Videos module
+
+User page: `/videos` (sidebar + dashboard card) — search by title, filter by category, sort (Featured/Newest/Oldest/A-Z/Z-A), and in-app playback for YouTube, Vimeo and direct video files (anything else opens in a new tab). Admin: `/admin/videos`, reachable from the tab bar next to Manage Product Presentations at `/admin/dashboard`. Same add/edit/delete/publish/reorder workflow as presentations, plus an optional category field and an optional thumbnail (falls back to an automatic YouTube thumbnail, or a generic placeholder).
+
     npm run admin:create   # once: create the admin email + password (stored hashed in server/data/admin.json)
     npm run dev            # development: site + API together
 
@@ -25,7 +29,7 @@ Production (one port, whole company can reach it):
     npm run build
     npm start              # http://localhost:3000 and your network address; set PORT=8080 to change
 
-Where data lives: `server/data/presentations.json` (records), `server/data/uploads/` (thumbnails), `server/data/admin.json` (admin hashes), `server/data/session.key` (login signing key). Back up the `server/data` folder. Never commit or share it.
+Where data lives: `server/data/presentations.json` and `server/data/videos.json` (records), `server/data/uploads/` (thumbnails), `server/data/admin.json` (admin hashes), `server/data/session.key` (login signing key). Back up the `server/data` folder. Never commit or share it.
 
 Security: passwords are salted scrypt hashes; the admin session is an httpOnly signed cookie; login is rate-limited; uploads are checked by real file bytes (JPG/PNG/WebP, 5 MB); every admin route needs the session. Serve over HTTPS if the portal is reachable outside your office network.
 
