@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Building2, Users, Zap, Cog, Factory, Briefcase, Wrench, Truck, FlaskConical,
   Map, Ruler, ShieldCheck, Settings, LogOut, Info, Presentation,
-  Laptop, Calculator, Globe2, TrendingUp, Megaphone, Waypoints, Clapperboard,
+  Laptop, Calculator, Globe2, TrendingUp, Megaphone, Waypoints, Clapperboard, Building,
 } from 'lucide-react';
 import type { NavItem } from '@/types';
 import { units } from '@/data/common';
@@ -18,6 +18,7 @@ export const navItems: NavItem[] = [
   ...units.map((u): NavItem => ({ id: `hr${u.n}`, label: u.name, path: `/hr/${u.n}`, icon: Users, section: 'Subsidiary Companies', description: `${u.name} reporting flow` })),
   ...departments.map((d): NavItem => ({ id: `dept-${d.key}`, label: d.key === 'rnd' ? 'Research & Development' : d.label, path: `/departments/${d.key}`, icon: deptIcons[d.key], section: 'Departments', description: d.description })),
   { id: 'layout', label: 'Factory Layout', path: '/factory-layout', icon: Map, section: 'Factory', description: 'Vastu-based plant layout and material flow' },
+  { id: 'office-layout', label: 'Office Layout', path: '/office-layout', icon: Building, section: 'Factory', description: 'Corporate office 3D layout, architectural blueprint and office information' },
   { id: 'dims', label: 'Factory Dimensions', path: '/factory-dimensions', icon: Ruler, section: 'Factory', description: 'Recommended dimensional sizes' },
   { id: 'ppt', label: 'Our Product PPT', path: '/product-ppt', icon: Presentation, section: 'Products', description: 'Product presentations and technical information' },
   { id: 'videos', label: 'Videos', path: '/videos', icon: Clapperboard, section: 'Products', description: 'Watch product, training and event videos' },

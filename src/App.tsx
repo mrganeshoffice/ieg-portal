@@ -15,6 +15,7 @@ import OrganisationFlowPage from './pages/OrganisationFlowPage';
 import VideosPage from './pages/VideosPage';
 
 const FactoryLayoutPage = lazy(() => import('./pages/FactoryLayoutPage'));
+const OfficeLayoutPage = lazy(() => import('./pages/OfficeLayoutPage'));
 const FactoryDimensionsPage = lazy(() => import('./pages/FactoryDimensionsPage'));
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="videos" element={<VideosPage />} />
           <Route path="administration" element={<ChartPage kind="admin" />} />
           <Route path="factory-layout" element={<FactoryLayoutPage />} />
+          <Route path="office-layout" element={<OfficeLayoutPage />} />
           <Route path="factory-dimensions" element={<FactoryDimensionsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />

@@ -56,6 +56,10 @@
   to = "/index.html"
   status = 200
 [[redirects]]
+  from = "/office-layout"
+  to = "/index.html"
+  status = 200
+[[redirects]]
   from = "/factory-dimensions"
   to = "/index.html"
   status = 200
