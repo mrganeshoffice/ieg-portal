@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createApiHandler } from './api.mjs';
 
@@ -30,6 +31,17 @@ async function serveStatic(req, res) {
   if (req.method === 'HEAD') return res.end();
   createReadStream(file).pipe(res);
 }
+
+/** Some hosts (e.g. an "Express" preset) only run `npm install` + start, never the build. If dist/ is missing, build it once here. */
+async function ensureBuilt() {
+  if (await stat(path.join(DIST, 'index.html')).catch(() => null)) return;
+  const root = path.resolve(DIST, '..');
+  console.log('dist/ not found - building the site once (this can take a minute)...');
+  const run = (args, env = {}) => spawnSync('npm', args, { cwd: root, stdio: 'inherit', env: { ...process.env, ...env } });
+  run(['install', '--include=dev', '--no-audit', '--no-fund'], { NODE_ENV: 'development' });
+  run(['exec', '--', 'vite', 'build']);
+}
+await ensureBuilt();
 
 const api = await createApiHandler();
 http.createServer((req, res) => { api(req, res, () => serveStatic(req, res)).catch(() => { res.writeHead(500); res.end(); }); })
