@@ -2,6 +2,7 @@
 import readline from 'node:readline';
 import { randomBytes } from 'node:crypto';
 import { hashPassword, readAdmins, saveAdmins, DATA_DIR } from './api.mjs';
+import { connect, dbConfigured } from './ems/db.mjs';
 
 const forNetlify = process.argv.includes('--netlify');
 
@@ -27,6 +28,18 @@ if (forNetlify) {
   console.log(`ADMINS_JSON=${JSON.stringify([{ email, salt, hash }])}\n`);
   console.log(`SESSION_SECRET=${randomBytes(32).toString('hex')}\n`);
   console.log('Keep SESSION_SECRET the same afterwards (changing it signs the admin out). Do not commit these values.');
+  process.exit(0);
+}
+if (dbConfigured()) { // employee-management database: create or reset a super admin there
+  const pool = await connect();
+  const [rows] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+  if (rows.length) await pool.query("UPDATE users SET password_salt = ?, password_hash = ?, role = 'super_admin', is_active = 1, must_change_password = 0, token_version = token_version + 1 WHERE id = ?", [salt, hash, rows[0].id]);
+  else {
+    const [u] = await pool.query("INSERT INTO users (email, password_salt, password_hash, role) VALUES (?,?,?, 'super_admin')", [email, salt, hash]);
+    await pool.query("INSERT INTO employees (user_id, first_name, status) VALUES (?, 'Administrator', 'active')", [u.insertId]);
+  }
+  console.log(`\nSuper admin saved in the database: ${email}\nSign in at /admin/login or /login`);
+  await pool.end();
   process.exit(0);
 }
 const admins = (await readAdmins()).filter((a) => a.email !== email);

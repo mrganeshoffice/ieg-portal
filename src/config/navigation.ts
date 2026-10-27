@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Building2, Users, Zap, Cog, Factory, Briefcase, Wrench, Truck, FlaskConical,
   Map, Ruler, ShieldCheck, Settings, LogOut, Info, Presentation,
-  Laptop, Calculator, Globe2, TrendingUp, Megaphone, Waypoints, Clapperboard, Building,
+  Laptop, Calculator, Globe2, TrendingUp, Megaphone, Waypoints, Clapperboard, Building, UserCircle, UsersRound, BriefcaseBusiness,
 } from 'lucide-react';
 import type { NavItem } from '@/types';
 import { units } from '@/data/common';
@@ -23,6 +23,9 @@ export const navItems: NavItem[] = [
   { id: 'ppt', label: 'Our Product PPT', path: '/product-ppt', icon: Presentation, section: 'Products', description: 'Product presentations and technical information' },
   { id: 'videos', label: 'Videos', path: '/videos', icon: Clapperboard, section: 'Products', description: 'Watch product, training and event videos' },
   { id: 'admin', label: 'Administration Structure', path: '/administration', icon: ShieldCheck, section: 'Administration', description: 'Administration Team and support functions' },
+  { id: 'my-profile', label: 'My Profile', path: '/my-profile', icon: UserCircle, section: 'Account', description: 'Your personal and professional details' },
+  { id: 'my-team', label: 'My Team', path: '/my-team', icon: UsersRound, section: 'Account', description: 'People who report to you', roles: ['manager', 'admin', 'super_admin'] },
+  { id: 'employee-admin', label: 'Employee Management', path: '/admin/employees', icon: BriefcaseBusiness, section: 'Administration', description: 'Create and manage employee accounts', roles: ['admin', 'super_admin'] },
   { id: 'settings', label: 'Settings', path: '/settings', icon: Settings, section: 'Account', description: 'Theme, data confirmation and session' },
   { id: 'logout', label: 'Logout', path: '#logout', icon: LogOut, section: 'Account', description: 'Sign out', action: 'logout' },
 ];

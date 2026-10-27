@@ -47,3 +47,16 @@ The same API runs as a Netlify Function (`netlify/functions/api.mjs`); data is s
     npx netlify-cli deploy --build --prod
 
 Add the two variables, then deploy again so they take effect. Notes: images max 4 MB; on Netlify the user page refreshes about every 20 seconds (no instant push); if you add a new top-level page route in `src/App.tsx`, add it to `netlify.toml` too.
+
+## Employee Management (EMS) — MySQL setup
+
+The EMS (per-employee logins, roles, employee records, documents, audit log) needs a MySQL/MariaDB database. Without one the portal runs as before and `/api/auth` + `/api/ems` answer 503.
+
+1. In hPanel → Databases → create a MySQL database and user.
+2. Set these environment variables on the Node.js app (never commit them): `DB_HOST`, `DB_PORT` (optional), `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and `IEG_DATA_DIR` (a folder **outside** the app folder, so deploys do not wipe uploads and the session key).
+3. For the first super admin set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` (min 10 chars, letters + number), redeploy, sign in at `/admin/login`, then **remove the password variable**. Or run `npm run admin:create` with the same DB variables.
+4. Tables are created automatically by append-only migrations (`schema_migrations`); nothing is ever dropped.
+
+Roles: `super_admin`, `admin` (HR), `manager` (sees only direct reports, work fields only), `employee` (own record only). Passwords are scrypt-hashed and never shown; new employees receive a single-use 72-hour setup link. Tests: `node server/ems/test-api.mjs` (needs a disposable test database).
+
+Rollback: unset the `DB_*` variables and redeploy; the portal returns to the legacy admin login. Data in MySQL is untouched.

@@ -1,38 +1,29 @@
-/**
- * Client-side demo authentication. INTERNAL PROTOTYPE ONLY.
- * Everything auth-related lives in this file so it can be replaced by a real backend call
- * (e.g. POST /api/auth/login returning a token) without touching the UI.
- */
-const STORAGE_KEY = 'ieg.portal.session';
-const DEMO_USER = { email: 'ieg@ieg.com', password: 'ieg@2026', name: 'IEG Admin' };
+/** Portal sign-in against the server (/api/auth/*). The session is an httpOnly cookie; nothing secret is kept in the browser. */
+import { ApiError, api } from '@/lib/api';
 
-export interface Session { email: string; name: string; issuedAt: number; expiresAt: number }
+export type Role = 'super_admin' | 'admin' | 'manager' | 'employee';
+export interface Session { id: number; email: string; name: string; role: Role; employeeId: number | null; mustChangePassword: boolean }
 export type AuthResult = { ok: true; session: Session } | { ok: false; error: string };
 
-const DAY = 24 * 60 * 60 * 1000;
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const fail = (e: unknown): { ok: false; error: string } => ({ ok: false, error: e instanceof ApiError ? e.message : 'Something went wrong. Please try again.' });
 
 export async function authenticate(email: string, password: string, remember: boolean): Promise<AuthResult> {
-  await wait(1100); // simulates network latency
-  if (email.trim().toLowerCase() !== DEMO_USER.email || password !== DEMO_USER.password) {
-    return { ok: false, error: 'Incorrect email or password. Check your details and try again.' };
-  }
-  const now = Date.now();
-  const session: Session = { email: DEMO_USER.email, name: DEMO_USER.name, issuedAt: now, expiresAt: now + (remember ? 30 * DAY : DAY) };
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(session)); } catch { /* storage unavailable */ }
-  return { ok: true, session };
+  try { return { ok: true, session: await api<Session>('/api/auth/login', { method: 'POST', body: { email: email.trim(), password, remember } }) }; } catch (e) { return fail(e); }
 }
-
-export function loadSession(): Session | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const s = JSON.parse(raw) as Session;
-    if (!s?.email || s.expiresAt < Date.now()) { localStorage.removeItem(STORAGE_KEY); return null; }
-    return s;
-  } catch { return null; }
+/** The signed-in user, or null when nobody is signed in. */
+export async function loadSession(): Promise<Session | null> {
+  try { return await api<Session>('/api/auth/me'); } catch (e) { if (e instanceof ApiError && (e.status === 401 || e.status === 503 || e.status === 404)) return null; throw e; }
 }
-
-export function clearSession() {
-  try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+export async function clearSession(): Promise<void> {
+  try { await api('/api/auth/logout', { method: 'POST', body: {} }); } catch { /* the local sign-out still proceeds */ }
 }
+export async function changePassword(current: string, password: string): Promise<AuthResult> {
+  try { return { ok: true, session: await api<Session>('/api/auth/change-password', { method: 'POST', body: { current, password } }) }; } catch (e) { return fail(e); }
+}
+export async function getSetupInfo(token: string): Promise<{ email: string; name: string | null } | { error: string }> {
+  try { return await api<{ email: string; name: string | null }>(`/api/auth/setup-info?token=${encodeURIComponent(token)}`); } catch (e) { return { error: e instanceof ApiError ? e.message : 'Could not check this link.' }; }
+}
+export async function setupPassword(token: string, password: string): Promise<AuthResult> {
+  try { return { ok: true, session: await api<Session>('/api/auth/setup-password', { method: 'POST', body: { token, password } }) }; } catch (e) { return fail(e); }
+}
+export const isAdminRole = (r?: Role | null) => r === 'admin' || r === 'super_admin';

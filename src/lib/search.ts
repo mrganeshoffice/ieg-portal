@@ -10,7 +10,7 @@ let cache: SearchEntry[] | null = null;
 
 export function searchIndex(): SearchEntry[] {
   if (cache) return cache;
-  const out: SearchEntry[] = navItems.filter((n) => !n.action).map((n) => ({ key: `page:${n.id}`, label: n.label, subtitle: n.description, kind: 'page', route: n.path }));
+  const out: SearchEntry[] = navItems.filter((n) => !n.action && !n.roles).map((n) => ({ key: `page:${n.id}`, label: n.label, subtitle: n.description, kind: 'page', route: n.path }));
   const add = (root: OrgNode, route: string, where: string) => walk(root, (n) => out.push({ key: `${route}:${n.id}`, label: n.label, subtitle: [n.subtitle, where].filter(Boolean).join(' · '), kind: n.kind, route, focus: n.id }));
   add(groupStructure, '/group-structure', 'Group Structure');
   Object.entries(hrTrees).forEach(([n, t]) => add(t, `/hr/${n}`, t.label));

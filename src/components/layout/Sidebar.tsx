@@ -6,9 +6,10 @@ import { useAuth } from '@/context/AuthContext';
 import Logo from '@/components/ui/Logo';
 
 export default function Sidebar({ collapsed, onToggle, onNavigate, mobile }: { collapsed: boolean; onToggle: () => void; onNavigate?: () => void; mobile?: boolean }) {
-  const { logout } = useAuth();
+  const { logout, session } = useAuth();
   const nav = useNavigate();
-  const sections = [...new Set(navItems.map((n) => n.section))];
+  const visible = navItems.filter((n) => !n.roles || (session && n.roles.includes(session.role)));
+  const sections = [...new Set(visible.map((n) => n.section))];
   const slim = collapsed && !mobile;
 
   return (
@@ -26,13 +27,13 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, mobile }: { c
             {!slim && <p className="mb-1.5 px-3 text-xs font-semibold text-slate-500">{s}</p>}
             {slim && <div className="mx-3 mb-2 h-px bg-white/10" />}
             <ul className="space-y-0.5">
-              {navItems.filter((n) => n.section === s).map((n) => {
+              {visible.filter((n) => n.section === s).map((n) => {
                 const Icon = n.icon;
                 const base = `relative flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition ${slim ? 'justify-center' : ''}`;
                 if (n.action === 'logout') {
                   return (
                     <li key={n.id}>
-                      <button className={`${base} w-full text-slate-400 hover:bg-red-500/10 hover:text-red-300`} title={n.label} onClick={() => { logout(); nav('/login'); }}>
+                      <button className={`${base} w-full text-slate-400 hover:bg-red-500/10 hover:text-red-300`} title={n.label} onClick={() => { void logout().then(() => nav('/login')); }}>
                         <Icon size={18} className="shrink-0" />{!slim && <span>{n.label}</span>}
                       </button>
                     </li>

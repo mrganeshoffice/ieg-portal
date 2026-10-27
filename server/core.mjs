@@ -5,8 +5,9 @@
  * A "storage" adapter provides: list, get, put, remove, putImage, getImage, removeImage.
  * `videoStorage` provides the same list/get/put/remove for the Videos module (images are shared).
  */
-import { createHmac, randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
+import { makeSessions, parseCookies } from './session.mjs';
 
 const scryptAsync = promisify(scrypt);
 
@@ -26,7 +27,6 @@ export async function hashPassword(password, saltHex) {
   return { salt: salt.toString('hex'), hash: hash.toString('hex') };
 }
 
-const b64 = (s) => Buffer.from(s).toString('base64url');
 const byOrder = (a, b) => a.display_order - b.display_order || +new Date(b.created_at) - +new Date(a.created_at);
 
 function validUrl(u) {
@@ -70,22 +70,14 @@ function sniff(buf) {
   return null;
 }
 
-export function createCore({ storage, videoStorage, getAdmins, getSecret, onChange = () => {} }) {
+export function createCore({ storage, videoStorage, getAdmins, getSecret, resolveAdmin, onChange = () => {} }) {
   /* ---- sessions: HMAC-signed httpOnly cookie ---- */
-  async function sign(payload) { const body = b64(JSON.stringify(payload)); return `${body}.${createHmac('sha256', await getSecret()).update(body).digest('base64url')}`; }
-  async function verify(token) {
-    const [body, sig] = String(token || '').split('.');
-    if (!body || !sig) return null;
-    const good = createHmac('sha256', await getSecret()).update(body).digest('base64url');
-    const x = Buffer.from(sig), y = Buffer.from(good);
-    if (x.length !== y.length || !timingSafeEqual(x, y)) return null;
-    try { const p = JSON.parse(Buffer.from(body, 'base64url').toString()); return p.exp > Date.now() ? p : null; } catch { return null; }
-  }
-  const parseCookies = (h) => Object.fromEntries(String(h || '').split(';').map((c) => c.trim().split(/=(.*)/s).slice(0, 2)).filter(([k]) => k));
+  const { sign, verify } = makeSessions(getSecret);
+  /** The admin cookie, or (when the EMS module is active) a signed-in admin/super-admin user session. */
   async function currentAdmin(r) {
     const p = await verify(parseCookies(r.headers.cookie)[COOKIE]);
-    if (!p) return null;
-    return (await getAdmins()).some((a) => a.email === p.email) ? { email: p.email } : null; // removed admins lose access at once
+    if (p && (await getAdmins()).some((a) => a.email === p.email)) return { email: p.email }; // removed admins lose access at once
+    return resolveAdmin ? resolveAdmin(r.headers) : null;
   }
   async function checkLogin(email, password) {
     const admin = (await getAdmins()).find((a) => a.email === email.trim().toLowerCase());

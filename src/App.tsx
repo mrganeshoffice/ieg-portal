@@ -20,16 +20,26 @@ const FactoryDimensionsPage = lazy(() => import('./pages/FactoryDimensionsPage')
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminVideosPage = lazy(() => import('./pages/AdminVideosPage'));
+const AdminEmployeesPage = lazy(() => import('./pages/AdminEmployeesPage'));
+const AdminEmployeeDetailPage = lazy(() => import('./pages/AdminEmployeeDetailPage'));
+const AdminMasterDataPage = lazy(() => import('./pages/AdminMasterDataPage'));
+const AdminAuditPage = lazy(() => import('./pages/AdminAuditPage'));
+const MyProfilePage = lazy(() => import('./pages/MyProfilePage'));
+const MyTeamPage = lazy(() => import('./pages/MyTeamPage'));
+const SetupPasswordPage = lazy(() => import('./pages/PasswordPages').then((m) => ({ default: m.SetupPasswordPage })));
+const ChangePasswordPage = lazy(() => import('./pages/PasswordPages').then((m) => ({ default: m.ChangePasswordPage })));
 
 /** Admin auth is a separate provider, mounted only for /admin/* routes. */
 function AdminShell() {
   return <AdminAuthProvider><Outlet /></AdminAuthProvider>;
 }
 
-function Protected({ children }: { children: JSX.Element }) {
-  const { session } = useAuth();
+function Protected({ children, allowPending = false }: { children: JSX.Element; allowPending?: boolean }) {
+  const { status, session } = useAuth();
   const loc = useLocation();
+  if (status === 'loading') return <div className="flex min-h-screen items-center justify-center bg-app"><div className="skeleton h-24 w-24 !rounded-3xl" aria-busy="true" aria-label="Checking your session" /></div>;
   if (!session) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
+  if (session.mustChangePassword && !allowPending) return <Navigate to="/change-password" replace />;
   return children;
 }
 
@@ -38,10 +48,16 @@ export default function App() {
     <Suspense fallback={<div className="skeleton m-8 h-96" />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/setup-password" element={<SetupPasswordPage />} />
+        <Route path="/change-password" element={<Protected allowPending><ChangePasswordPage /></Protected>} />
         <Route element={<AdminShell />}>
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboardPage /></AdminProtectedRoute>} />
           <Route path="/admin/videos" element={<AdminProtectedRoute><AdminVideosPage /></AdminProtectedRoute>} />
+          <Route path="/admin/employees" element={<AdminProtectedRoute><AdminEmployeesPage /></AdminProtectedRoute>} />
+          <Route path="/admin/employees/:id" element={<AdminProtectedRoute><AdminEmployeeDetailPage /></AdminProtectedRoute>} />
+          <Route path="/admin/master-data" element={<AdminProtectedRoute><AdminMasterDataPage /></AdminProtectedRoute>} />
+          <Route path="/admin/audit" element={<AdminProtectedRoute><AdminAuditPage /></AdminProtectedRoute>} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
         <Route element={<Protected><AppLayout /></Protected>}>
@@ -58,6 +74,8 @@ export default function App() {
           <Route path="factory-layout" element={<FactoryLayoutPage />} />
           <Route path="office-layout" element={<OfficeLayoutPage />} />
           <Route path="factory-dimensions" element={<FactoryDimensionsPage />} />
+          <Route path="my-profile" element={<MyProfilePage />} />
+          <Route path="my-team" element={<MyTeamPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

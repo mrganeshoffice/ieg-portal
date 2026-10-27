@@ -60,7 +60,7 @@ export default function Topbar({ onMenu, onSearch }: { onMenu: () => void; onSea
               <div className="px-3 py-2"><p className="text-sm font-bold">{session?.name}</p><p className="truncate text-xs text-muted">{session?.email}</p></div>
               <div className="my-1 h-px bg-line" />
               <button role="menuitem" className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-app" onClick={() => nav('/settings')}><Settings size={16} />Settings</button>
-              <button role="menuitem" className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-500 hover:bg-red-500/10" onClick={() => { logout(); nav('/login'); }}><LogOut size={16} />Logout</button>
+              <button role="menuitem" className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-500 hover:bg-red-500/10" onClick={() => { void logout().then(() => nav('/login')); }}><LogOut size={16} />Logout</button>
             </motion.div>
           )}
         </AnimatePresence>

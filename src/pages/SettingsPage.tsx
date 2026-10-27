@@ -30,7 +30,7 @@ export default function SettingsPage() {
 
       <section className="card p-6">
         <h2 className="text-lg font-bold">Session</h2>
-        <p className="mt-1 text-sm text-muted">Signed in as {session?.email}. Session expires {session ? new Date(session.expiresAt).toLocaleString() : ''}.</p>
+        <p className="mt-1 text-sm text-muted">Signed in as {session?.email}.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <button className="btn-ghost" onClick={() => { clearRecent(); setCleared(true); }}><Trash2 size={16} />{cleared ? 'Recent history cleared' : 'Clear recently viewed'}</button>
           <button className="btn-ghost text-red-500" onClick={logout}><LogOut size={16} />Logout</button>

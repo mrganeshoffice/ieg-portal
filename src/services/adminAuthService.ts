@@ -20,6 +20,7 @@ export async function getAdminSession(): Promise<AdminUser | null> {
 
 export async function signOutAdmin(): Promise<void> {
   try { await api('/api/admin/logout', { method: 'POST', body: {} }); } catch { /* the local sign-out still proceeds */ }
+  try { await api('/api/auth/logout', { method: 'POST', body: {} }); } catch { /* employee system may not be enabled */ }
 }
 
 /** True once at least one admin account exists on the server. */

@@ -9,6 +9,7 @@ import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HttpError, MAX_BODY, createCore, hashPassword } from './core.mjs';
+import { dbConfigured } from './ems/db.mjs';
 
 export { hashPassword };
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -75,7 +76,13 @@ function readBody(req, limit) {
 
 export async function createApiHandler() {
   await mkdir(UPLOADS, { recursive: true });
-  const core = createCore({ storage: fileStorage, videoStorage, getAdmins: readAdmins, getSecret: fileSecret, onChange: broadcast });
+  // Employee management needs MySQL (DB_* environment variables). Without it the rest of the portal works exactly as before.
+  let ems = null;
+  if (dbConfigured()) {
+    try { ems = await (await import('./ems/index.mjs')).createEms({ getSecret: fileSecret, dataDir: DATA_DIR, legacyAdmins: readAdmins }); console.log('[ems] employee management is on'); }
+    catch (e) { console.error('[ems] disabled - could not start:', e.message); }
+  }
+  const core = createCore({ storage: fileStorage, videoStorage, getAdmins: ems ? ems.getAdmins : readAdmins, resolveAdmin: ems?.resolveAdmin, getSecret: fileSecret, onChange: broadcast });
 
   return async function handler(req, res, next) {
     let url;
@@ -93,7 +100,11 @@ export async function createApiHandler() {
     let out;
     try {
       const body = req.method === 'GET' || req.method === 'HEAD' ? null : await readBody(req, MAX_BODY);
-      out = await core({ method: req.method, pathname: p, headers: req.headers, body, ip: req.socket.remoteAddress || 'unknown', https: !!req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https', host: req.headers.host });
+      const r = { method: req.method, pathname: p, search: url.search, headers: req.headers, body, ip: req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown', https: !!req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https', host: req.headers.host };
+      if (p.startsWith('/api/auth/') || p.startsWith('/api/ems/')) {
+        if (!ems) throw new HttpError(503, 'The employee system is not set up on this server yet.');
+        out = await ems.handle(r);
+      } else out = await core(r);
     } catch (e) {
       out = { status: e instanceof HttpError ? e.status : 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: e instanceof HttpError ? e.message : 'Something went wrong on the server.' }) };
     }

@@ -26,4 +26,6 @@ export interface NavItem {
   section: string;
   description: string;
   action?: 'logout';
+  /** Roles that see this item. Omitted = everyone. (The server enforces access either way.) */
+  roles?: ('super_admin' | 'admin' | 'manager' | 'employee')[];
 }
