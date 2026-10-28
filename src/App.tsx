@@ -24,6 +24,13 @@ const AdminEmployeesPage = lazy(() => import('./pages/AdminEmployeesPage'));
 const AdminEmployeeDetailPage = lazy(() => import('./pages/AdminEmployeeDetailPage'));
 const AdminMasterDataPage = lazy(() => import('./pages/AdminMasterDataPage'));
 const AdminAuditPage = lazy(() => import('./pages/AdminAuditPage'));
+const WorkHomePage = lazy(() => import('./pages/WorkHomePage'));
+const AttendancePage = lazy(() => import('./pages/AttendancePage'));
+const TasksPage = lazy(() => import('./pages/TasksPage'));
+const LeavePage = lazy(() => import('./pages/LeavePage'));
+const ChatPage = lazy(() => import('./pages/ChatPage'));
+const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const PolicyPage = lazy(() => import('./pages/PolicyPage'));
 const MyProfilePage = lazy(() => import('./pages/MyProfilePage'));
 const MyTeamPage = lazy(() => import('./pages/MyTeamPage'));
 const SetupPasswordPage = lazy(() => import('./pages/PasswordPages').then((m) => ({ default: m.SetupPasswordPage })));
@@ -41,6 +48,17 @@ function Protected({ children, allowPending = false }: { children: JSX.Element; 
   if (!session) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
   if (session.mustChangePassword && !allowPending) return <Navigate to="/change-password" replace />;
   return children;
+}
+
+/** Company-portal pages (org charts, layouts, products) are only for accounts with full portal access. */
+function FullOnly() {
+  const { session } = useAuth();
+  if (!session?.fullAccess) return <Navigate to="/work" replace />;
+  return <Outlet />;
+}
+function Landing() {
+  const { session } = useAuth();
+  return session?.fullAccess ? <DashboardPage /> : <Navigate to="/work" replace />;
 }
 
 export default function App() {
@@ -61,19 +79,28 @@ export default function App() {
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
         <Route element={<Protected><AppLayout /></Protected>}>
-          <Route index element={<DashboardPage />} />
-          <Route path="about" element={<AboutPage />} />
-          <Route path="org-chart" element={<Navigate to="/group-structure" replace />} />
-          <Route path="group-structure" element={<ChartPage kind="group" />} />
-          <Route path="organisation-flow" element={<OrganisationFlowPage />} />
-          <Route path="hr/:n" element={<ChartPage kind="hr" />} />
-          <Route path="departments/:key" element={<ChartPage kind="dept" />} />
-          <Route path="product-ppt" element={<ProductPresentationsPage />} />
-          <Route path="videos" element={<VideosPage />} />
-          <Route path="administration" element={<ChartPage kind="admin" />} />
-          <Route path="factory-layout" element={<FactoryLayoutPage />} />
-          <Route path="office-layout" element={<OfficeLayoutPage />} />
-          <Route path="factory-dimensions" element={<FactoryDimensionsPage />} />
+          <Route index element={<Landing />} />
+          <Route element={<FullOnly />}>
+            <Route path="about" element={<AboutPage />} />
+            <Route path="org-chart" element={<Navigate to="/group-structure" replace />} />
+            <Route path="group-structure" element={<ChartPage kind="group" />} />
+            <Route path="organisation-flow" element={<OrganisationFlowPage />} />
+            <Route path="hr/:n" element={<ChartPage kind="hr" />} />
+            <Route path="departments/:key" element={<ChartPage kind="dept" />} />
+            <Route path="product-ppt" element={<ProductPresentationsPage />} />
+            <Route path="videos" element={<VideosPage />} />
+            <Route path="administration" element={<ChartPage kind="admin" />} />
+            <Route path="factory-layout" element={<FactoryLayoutPage />} />
+            <Route path="office-layout" element={<OfficeLayoutPage />} />
+            <Route path="factory-dimensions" element={<FactoryDimensionsPage />} />
+          </Route>
+          <Route path="work" element={<WorkHomePage />} />
+          <Route path="attendance" element={<AttendancePage />} />
+          <Route path="tasks" element={<TasksPage />} />
+          <Route path="leave" element={<LeavePage />} />
+          <Route path="chat" element={<ChatPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="policy" element={<PolicyPage />} />
           <Route path="my-profile" element={<MyProfilePage />} />
           <Route path="my-team" element={<MyTeamPage />} />
           <Route path="settings" element={<SettingsPage />} />

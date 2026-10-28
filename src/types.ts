@@ -26,6 +26,8 @@ export interface NavItem {
   section: string;
   description: string;
   action?: 'logout';
+  /** Company-portal content (org charts, layouts, products). Only accounts with full portal access see it. */
+  full?: boolean;
   /** Roles that see this item. Omitted = everyone. (The server enforces access either way.) */
   roles?: ('super_admin' | 'admin' | 'manager' | 'employee')[];
 }

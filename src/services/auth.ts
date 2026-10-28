@@ -2,7 +2,7 @@
 import { ApiError, api } from '@/lib/api';
 
 export type Role = 'super_admin' | 'admin' | 'manager' | 'employee';
-export interface Session { id: number; email: string; name: string; role: Role; employeeId: number | null; mustChangePassword: boolean }
+export interface Session { id: number; email: string; name: string; role: Role; employeeId: number | null; mustChangePassword: boolean; fullAccess: boolean }
 export type AuthResult = { ok: true; session: Session } | { ok: false; error: string };
 
 const fail = (e: unknown): { ok: false; error: string } => ({ ok: false, error: e instanceof ApiError ? e.message : 'Something went wrong. Please try again.' });

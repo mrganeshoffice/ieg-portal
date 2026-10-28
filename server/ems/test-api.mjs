@@ -124,7 +124,7 @@ r = await admin.call('GET', "/api/ems/employees?q=%27%20OR%201%3D1%20--"); ok(r.
 r = await admin.call('POST', '/api/auth/logout'); r = await admin.call('GET', '/api/auth/me'); ok(r.status === 401, 'logout ends the session');
 
 // throttle (last: it blocks this IP for the window)
-let last; for (let i = 0; i < 10; i++) last = await new Client().call('POST', '/api/auth/login', { email: `nobody${i}@test.local`, password: 'wrong-password-1' });
+let last; for (let i = 0; i < 45; i++) last = await new Client().call('POST', '/api/auth/login', { email: `nobody${i}@test.local`, password: 'wrong-password-1' });
 ok(last.status === 429, 'login is rate limited');
 
 console.log(`\n${pass} passed, ${fail} failed`);

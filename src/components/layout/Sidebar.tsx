@@ -1,14 +1,14 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
-import { navItems } from '@/config/navigation';
+import { navFor } from '@/config/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Logo from '@/components/ui/Logo';
 
 export default function Sidebar({ collapsed, onToggle, onNavigate, mobile }: { collapsed: boolean; onToggle: () => void; onNavigate?: () => void; mobile?: boolean }) {
   const { logout, session } = useAuth();
   const nav = useNavigate();
-  const visible = navItems.filter((n) => !n.roles || (session && n.roles.includes(session.role)));
+  const visible = navFor(session);
   const sections = [...new Set(visible.map((n) => n.section))];
   const slim = collapsed && !mobile;
 

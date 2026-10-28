@@ -10,7 +10,7 @@ export interface HistoryRow { field: string; old_value: string | null; new_value
 /** Employee as returned by the server. Fields outside a manager's view are absent, so most are optional. */
 export interface Employee {
   id: number; employee_code: string | null; first_name: string; middle_name?: string | null; last_name: string | null; full_name: string;
-  login_email: string; official_email: string | null; role: Role; is_active: boolean; must_change_password?: boolean; last_login_at?: string | null;
+  login_email: string; official_email: string | null; role: Role; is_active: boolean; must_change_password?: boolean; portal_full?: boolean; last_login_at?: string | null;
   photo_url: string | null; status: EmployeeStatus; joining_date: string | null;
   department_id: number | null; department: string | null; designation_id: number | null; designation: string | null;
   manager_id: number | null; manager_name: string | null; employment_type: string | null; work_location: string | null; shift: string | null;

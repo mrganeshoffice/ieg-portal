@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CornerDownLeft, Search } from 'lucide-react';
 import { runSearch } from '@/lib/search';
+import { useAuth } from '@/context/AuthContext';
 import { kindMeta } from '@/components/flow/nodeStyles';
 
 export default function SearchPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -10,7 +11,9 @@ export default function SearchPalette({ open, onClose }: { open: boolean; onClos
   const [i, setI] = useState(0);
   const nav = useNavigate();
   const ref = useRef<HTMLInputElement>(null);
-  const results = useMemo(() => runSearch(q), [q]);
+  const { session } = useAuth();
+  const full = !!session?.fullAccess;
+  const results = useMemo(() => runSearch(q, 12, full), [q, full]);
 
   useEffect(() => { if (open) { setQ(''); setI(0); setTimeout(() => ref.current?.focus(), 50); } }, [open]);
   useEffect(() => setI(0), [q]);

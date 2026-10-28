@@ -60,3 +60,11 @@ The EMS (per-employee logins, roles, employee records, documents, audit log) nee
 Roles: `super_admin`, `admin` (HR), `manager` (sees only direct reports, work fields only), `employee` (own record only). Passwords are scrypt-hashed and never shown; new employees receive a single-use 72-hour setup link. Tests: `node server/ems/test-api.mjs` (needs a disposable test database).
 
 Rollback: unset the `DB_*` variables and redeploy; the portal returns to the legacy admin login. Data in MySQL is untouched.
+
+### Work modules (attendance, tasks, leave, chat, reports)
+
+Added on top of the EMS (migration `002_work_modules`, applied automatically on start): check in/out with monthly view and HR corrections, tasks with comments, leave types/requests/approvals and holidays, in-app notifications, one-to-one chat (polling), manager/admin reports with CSV export, and an admin "Policy and Holidays" page (work start time, grace period, hours for full/half day, weekly off, time zone). The defaults are common values: confirm them with HR.
+
+**Who sees what.** Everyone sees the work pages. The company portal pages (org charts, layouts, products, videos) are shown only to accounts with full portal access: `ieg@ieg.com` always has it, and a super admin can grant or remove it per person on the employee page. To create that account: Admin → Employees → Add employee with email `ieg@ieg.com`, then send the setup link. Note: this hides pages in the app; the org-chart content itself ships inside the web app bundle, so treat it as internal-but-not-secret.
+
+Tests: `node server/ems/test-work.mjs` (84 checks) after `test-api.mjs`, against a throwaway database.

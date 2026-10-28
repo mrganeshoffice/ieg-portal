@@ -9,10 +9,13 @@ import path from 'node:path';
 import { COOKIE as ADMIN_COOKIE, HttpError, hashPassword } from '../core.mjs';
 import { makeSessions, parseCookies } from '../session.mjs';
 import { connect, tx } from './db.mjs';
+import { createWork } from './work.mjs';
 
 export const SESSION_COOKIE = 'ieg_session';
 const DAY = 24 * 60 * 60 * 1000;
 const ADMIN_ROLES = ['super_admin', 'admin'];
+/** Accounts that always get the full company portal (org charts, layouts, products). Everyone else sees only the work modules unless a super admin grants it. */
+const FULL_ACCESS_EMAILS = ['ieg@ieg.com'];
 const ROLES = ['super_admin', 'admin', 'manager', 'employee'];
 const STATUSES = ['active', 'on_leave', 'probation', 'suspended', 'resigned'];
 const MASTER = { departments: { table: 'departments' }, designations: { table: 'designations' }, work_location: { table: 'lookups', kind: 'work_location' }, employment_type: { table: 'lookups', kind: 'employment_type' }, shift: { table: 'lookups', kind: 'shift' } };
@@ -116,10 +119,12 @@ export async function createEms({ getSecret, dataDir, legacyAdmins = async () =>
     }
   }
 
+  for (const em of FULL_ACCESS_EMAILS) await pool.query('UPDATE users SET portal_full = 1 WHERE email = ?', [em]);
+
   /* ---------- users and sessions ---------- */
   const userSql = `SELECT u.*, e.id AS employee_id, e.first_name, e.last_name FROM users u LEFT JOIN employees e ON e.user_id = u.id`;
   const fullName = (u) => [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email;
-  const publicUser = (u) => ({ id: u.id, email: u.email, role: u.role, name: fullName(u), employeeId: u.employee_id ?? null, mustChangePassword: !!u.must_change_password });
+  const publicUser = (u) => ({ id: u.id, email: u.email, role: u.role, name: fullName(u), employeeId: u.employee_id ?? null, mustChangePassword: !!u.must_change_password, fullAccess: !!u.portal_full });
   async function userById(id) { const [r] = await pool.query(`${userSql} WHERE u.id = ?`, [id]); return r[0] || null; }
   async function userByEmail(email) { const [r] = await pool.query(`${userSql} WHERE u.email = ?`, [String(email).trim().toLowerCase()]); return r[0] || null; }
 
@@ -160,12 +165,13 @@ export async function createEms({ getSecret, dataDir, legacyAdmins = async () =>
 
   /* login throttling: per IP and per account, in memory */
   const fails = new Map();
-  const WINDOW = 10 * 60 * 1000, MAX_FAILS = 8;
-  const throttled = (k) => { const f = fails.get(k); if (!f) return false; if (Date.now() - f.first > WINDOW) { fails.delete(k); return false; } return f.count >= MAX_FAILS; };
+  const WINDOW = 10 * 60 * 1000, MAX_FAILS = 10; // per account / per link; one office often shares one IP, so the IP limit is higher
+  const IP_MAX_FAILS = 40;
+  const throttled = (k) => { const f = fails.get(k); if (!f) return false; if (Date.now() - f.first > WINDOW) { fails.delete(k); return false; } return f.count >= (/^[ec]:/.test(String(k)) ? MAX_FAILS : IP_MAX_FAILS); };
   const noteFail = (k) => { const f = fails.get(k); if (!f || Date.now() - f.first > WINDOW) fails.set(k, { count: 1, first: Date.now() }); else f.count++; };
 
   /* ---------- employee records ---------- */
-  const empSql = `SELECT e.*, u.email AS login_email, u.role, u.is_active, u.must_change_password, u.last_login_at,
+  const empSql = `SELECT e.*, u.email AS login_email, u.role, u.is_active, u.must_change_password, u.last_login_at, u.portal_full,
       d.name AS department, g.name AS designation, et.name AS employment_type, wl.name AS work_location, sh.name AS shift,
       CONCAT_WS(' ', m.first_name, m.last_name) AS manager_name
     FROM employees e JOIN users u ON u.id = e.user_id
@@ -181,7 +187,7 @@ export async function createEms({ getSecret, dataDir, legacyAdmins = async () =>
     const self = viewer.employee_id === e.id;
     const out = { ...e, full_name: [e.first_name, e.middle_name, e.last_name].filter(Boolean).join(' '), photo_url: e.photo_file ? `/api/ems/employees/${e.id}/photo` : null };
     delete out.photo_file; delete out.user_id;
-    out.is_active = !!out.is_active; out.must_change_password = !!out.must_change_password;
+    out.is_active = !!out.is_active; out.must_change_password = !!out.must_change_password; out.portal_full = !!out.portal_full;
     out.profile_completion = completion(e);
     if (isAdmin(viewer) || self) { out.editable = isAdmin(viewer) ? 'all' : 'self'; return out; }
     const limited = {}; for (const k of Object.keys(out)) if (MANAGER_VISIBLE.has(k)) limited[k] = out[k];
@@ -274,6 +280,8 @@ export async function createEms({ getSecret, dataDir, legacyAdmins = async () =>
   }
   const orderBy = (qs) => ` ORDER BY ${SORTS[qs.get('sort')] || SORTS.name} ${qs.get('dir') === 'desc' ? 'DESC' : 'ASC'}, e.id ASC`;
 
+  const work = createWork({ pool, json, readJson, audit, need, isAdmin });
+
   /* ---------- request router ---------- */
   async function route(r) {
     const p = r.pathname, m = r.method;
@@ -340,6 +348,7 @@ export async function createEms({ getSecret, dataDir, legacyAdmins = async () =>
 
     if (!p.startsWith('/api/ems/')) throw new HttpError(404, 'Not found.');
     const user = need(await currentUser(r.headers));
+    { const w = await work.route(r, user, qs); if (w) return w; }
 
     /* ----- own profile (self-service) ----- */
     if (p === '/api/ems/me' && m === 'GET') { if (user.employee_id == null) throw new HttpError(404, 'No employee profile is linked to this account.'); return json(200, toDto(await loadEmployee(user.employee_id), user)); }
@@ -454,7 +463,7 @@ export async function createEms({ getSecret, dataDir, legacyAdmins = async () =>
       try {
         employeeId = await tx(pool, async (c) => {
           const cred = await hashPassword(b.temporary_password ? b.temporary_password : randomBytes(24).toString('hex')); // with a setup link the password is unknowable until the employee sets one
-          const [u] = await c.query('INSERT INTO users (email, password_salt, password_hash, role, must_change_password) VALUES (?,?,?,?,1)', [email, cred.salt, cred.hash, role]);
+          const [u] = await c.query('INSERT INTO users (email, password_salt, password_hash, role, must_change_password, portal_full) VALUES (?,?,?,?,1,?)', [email, cred.salt, cred.hash, role, FULL_ACCESS_EMAILS.includes(email) ? 1 : 0]);
           const cols = { user_id: u.insertId, ...fields, official_email: fields.official_email ?? email };
           const [e] = await c.query(`INSERT INTO employees (${Object.keys(cols).map((k) => `\`${k}\``).join(',')}) VALUES (${Object.keys(cols).map(() => '?').join(',')})`, Object.values(cols));
           if (!fields.employee_code) await c.query('UPDATE employees SET employee_code = ? WHERE id = ?', [`IEG-${String(e.insertId).padStart(4, '0')}`, e.insertId]);
@@ -505,6 +514,14 @@ export async function createEms({ getSecret, dataDir, legacyAdmins = async () =>
         if (ADMIN_ROLES.includes(e.role) && user.role !== 'super_admin') throw new HttpError(403, 'Only a super admin can deactivate admin accounts.');
         await tx(pool, async (c) => { if (e.role === 'super_admin') await lastSuperAdminGuard(c, e.user_id); await c.query('UPDATE users SET is_active = 0, token_version = token_version + 1 WHERE id = ?', [e.user_id]); });
         await audit(user, 'employee.deactivate', 'employee', id, null, r.ip);
+        return json(200, toDto(await loadEmployee(id), user));
+      }
+      if (sub === 'portal-access' && m === 'POST') { // who may see the company portal pages (org charts, layouts, products)
+        if (user.role !== 'super_admin') throw new HttpError(403, 'Only a super admin can change portal access.');
+        const e = await getVisible(user, id); const full = !!readJson(r).full;
+        if (!full && FULL_ACCESS_EMAILS.includes(e.login_email)) throw new HttpError(409, 'This account always has full access.');
+        await pool.query('UPDATE users SET portal_full = ? WHERE id = ?', [full ? 1 : 0, e.user_id]);
+        await audit(user, 'employee.portal_access', 'employee', id, { full }, r.ip);
         return json(200, toDto(await loadEmployee(id), user));
       }
       if (sub === 'reactivate' && m === 'POST') {

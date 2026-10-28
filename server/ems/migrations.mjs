@@ -147,4 +147,113 @@ export const migrations = [
       ) ${T}`,
     ],
   },
+  {
+    id: '002_work_modules',
+    statements: [
+      `ALTER TABLE users ADD COLUMN portal_full TINYINT(1) NOT NULL DEFAULT 0`,
+      `CREATE TABLE settings (
+        k VARCHAR(60) NOT NULL PRIMARY KEY,
+        v VARCHAR(255) NOT NULL,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ${T}`,
+      `CREATE TABLE attendance (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        employee_id INT UNSIGNED NOT NULL,
+        work_date DATE NOT NULL,
+        check_in DATETIME NULL,
+        check_out DATETIME NULL,
+        source ENUM('self','admin') NOT NULL DEFAULT 'self',
+        note VARCHAR(255) NULL,
+        edited_by INT UNSIGNED NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_att_emp_day (employee_id, work_date),
+        KEY ix_att_day (work_date),
+        CONSTRAINT fk_att_emp FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+      ) ${T}`,
+      `CREATE TABLE holidays (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        holiday_date DATE NOT NULL,
+        name VARCHAR(120) NOT NULL,
+        UNIQUE KEY uq_holiday_date (holiday_date)
+      ) ${T}`,
+      `CREATE TABLE leave_types (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(80) NOT NULL,
+        annual_quota DECIMAL(5,1) NOT NULL DEFAULT 0,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        UNIQUE KEY uq_leave_type_name (name)
+      ) ${T}`,
+      `CREATE TABLE leave_requests (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        employee_id INT UNSIGNED NOT NULL,
+        leave_type_id INT UNSIGNED NOT NULL,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        days DECIMAL(4,1) NOT NULL,
+        half_day TINYINT(1) NOT NULL DEFAULT 0,
+        reason VARCHAR(500) NULL,
+        status ENUM('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
+        decided_by INT UNSIGNED NULL,
+        decided_at DATETIME NULL,
+        decision_note VARCHAR(255) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY ix_leave_emp (employee_id, start_date),
+        KEY ix_leave_status (status),
+        CONSTRAINT fk_leave_emp FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+        CONSTRAINT fk_leave_type FOREIGN KEY (leave_type_id) REFERENCES leave_types(id)
+      ) ${T}`,
+      `CREATE TABLE tasks (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(160) NOT NULL,
+        description TEXT NULL,
+        created_by INT UNSIGNED NOT NULL,
+        assignee_id INT UNSIGNED NOT NULL,
+        priority ENUM('low','medium','high') NOT NULL DEFAULT 'medium',
+        status ENUM('todo','in_progress','blocked','done') NOT NULL DEFAULT 'todo',
+        due_date DATE NULL,
+        completed_at DATETIME NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY ix_task_assignee (assignee_id, status),
+        KEY ix_task_creator (created_by),
+        CONSTRAINT fk_task_creator FOREIGN KEY (created_by) REFERENCES employees(id),
+        CONSTRAINT fk_task_assignee FOREIGN KEY (assignee_id) REFERENCES employees(id)
+      ) ${T}`,
+      `CREATE TABLE task_comments (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        task_id INT UNSIGNED NOT NULL,
+        author_id INT UNSIGNED NOT NULL,
+        body VARCHAR(1000) NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY ix_tc_task (task_id),
+        CONSTRAINT fk_tc_task FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+        CONSTRAINT fk_tc_author FOREIGN KEY (author_id) REFERENCES employees(id)
+      ) ${T}`,
+      `CREATE TABLE notifications (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id INT UNSIGNED NOT NULL,
+        kind VARCHAR(40) NOT NULL,
+        title VARCHAR(160) NOT NULL,
+        body VARCHAR(300) NULL,
+        link VARCHAR(160) NULL,
+        is_read TINYINT(1) NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY ix_notif_user (user_id, is_read, id),
+        CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ${T}`,
+      `CREATE TABLE chat_messages (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        sender_id INT UNSIGNED NOT NULL,
+        recipient_id INT UNSIGNED NOT NULL,
+        body VARCHAR(2000) NOT NULL,
+        read_at DATETIME NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY ix_chat_pair (sender_id, recipient_id, id),
+        KEY ix_chat_inbox (recipient_id, read_at),
+        CONSTRAINT fk_chat_s FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT fk_chat_r FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ${T}`,
+    ],
+  },
 ];

@@ -5,6 +5,7 @@ import { ChevronRight, LogOut, Maximize2, Menu, Minimize2, Moon, Search, Setting
 import { findNav } from '@/config/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import NotificationBell from './NotificationBell';
 
 export default function Topbar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () => void }) {
   const { pathname } = useLocation();
@@ -48,6 +49,7 @@ export default function Topbar({ onMenu, onSearch }: { onMenu: () => void; onSea
       </button>
       <button onClick={onSearch} className="icon-btn lg:hidden" aria-label="Search"><Search size={20} /></button>
       <button className="icon-btn hidden md:inline-flex" onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())} aria-label="Toggle fullscreen">{fs ? <Minimize2 size={19} /> : <Maximize2 size={19} />}</button>
+      <NotificationBell />
       <button className="icon-btn" onClick={toggle} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>{theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}</button>
 
       <div className="relative" ref={ref}>

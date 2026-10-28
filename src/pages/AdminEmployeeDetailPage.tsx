@@ -7,6 +7,7 @@ import Documents from '@/components/ems/Documents';
 import { StatusBadge } from '@/components/ems/Fields';
 import { ToastStack, useToasts } from '@/components/ui/Toast';
 import { SetupLinkModal } from './AdminEmployeesPage';
+import { setPortalAccess } from '@/services/workService';
 import { errMsg, getDirectory, getEmployee, getMaster, resetEmployeePassword, setEmployeeActive, updateEmployee } from '@/services/emsService';
 import { loadSession, type Role } from '@/services/auth';
 import { ROLE_LABEL, type DirectoryEntry, type Employee, type Master } from '@/types/ems';
@@ -66,6 +67,11 @@ export default function AdminEmployeeDetailPage() {
                     onChange={(e) => void act('role', async () => { const u = await updateEmployee(emp.id, { role: e.target.value }); setEmp({ ...emp, ...u }); toast.success('Role updated. They will need to sign in again.'); })}>
                     {(Object.keys(ROLE_LABEL) as Role[]).filter((r) => canAdminRoles || (r !== 'admin' && r !== 'super_admin') || r === emp.role).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
                   </select></label>
+                <div className="mt-4 rounded-xl border border-line p-3 text-sm">
+                  <p className="font-semibold">Company portal pages</p>
+                  <p className="mb-2 text-xs text-muted">Org charts, layouts and product pages. {emp.portal_full ? 'This person can see them.' : 'This person sees only the work pages (attendance, tasks, leave, chat).'}</p>
+                  {me === 'super_admin' && <button type="button" className="btn-ghost w-full justify-center" disabled={!!busy || (emp.portal_full && emp.login_email === 'ieg@ieg.com')} onClick={() => void act('portal', async () => { await setPortalAccess(emp.id, !emp.portal_full); await load(); toast.success(emp.portal_full ? 'Company pages hidden for this person.' : 'Company pages enabled for this person.'); })}>{emp.portal_full ? 'Hide company pages' : 'Allow company pages'}</button>}
+                </div>
                 <div className="mt-4 flex flex-col gap-2">
                   <button type="button" className="btn-ghost justify-start" disabled={!!busy || !emp.is_active}
                     onClick={() => { if (!window.confirm(`Reset the password for ${emp.full_name}? Their current password stops working immediately and they are signed out.`)) return; void act('reset', async () => { const r = await resetEmployeePassword(emp.id); setLink({ url: r.setupUrl, hours: r.setupExpiresHours }); void load(); }); }}>
