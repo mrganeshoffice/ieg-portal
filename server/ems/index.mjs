@@ -18,6 +18,7 @@ const ADMIN_ROLES = ['super_admin', 'admin'];
 const FULL_ACCESS_EMAILS = ['ieg@ieg.com'];
 const ROLES = ['super_admin', 'admin', 'manager', 'employee'];
 const STATUSES = ['active', 'on_leave', 'probation', 'suspended', 'resigned'];
+import { SEED_DEPARTMENTS, SEED_DESIGNATIONS } from './seed-master.mjs';
 const MASTER = { departments: { table: 'departments' }, designations: { table: 'designations' }, work_location: { table: 'lookups', kind: 'work_location' }, employment_type: { table: 'lookups', kind: 'employment_type' }, shift: { table: 'lookups', kind: 'shift' } };
 const MAX_DOC = 5 * 1024 * 1024, MAX_PHOTO = 2 * 1024 * 1024, MAX_DOCS_PER_EMPLOYEE = 30;
 
@@ -374,6 +375,15 @@ export async function createEms({ getSecret, dataDir, legacyAdmins = async () =>
         designations: (await pool.query(`SELECT id, name, is_active FROM designations${f} ORDER BY name`))[0],
         work_location: await lk('work_location'), employment_type: await lk('employment_type'), shift: await lk('shift'),
       });
+    }
+    if (p === '/api/ems/master/seed' && m === 'POST') {
+      needAdmin(user);
+      const added = { departments: 0, designations: 0 };
+      for (const [key, table, list] of [['departments', 'departments', SEED_DEPARTMENTS], ['designations', 'designations', SEED_DESIGNATIONS]]) {
+        for (const name of list) { const [res] = await pool.query(`INSERT IGNORE INTO ${table} (name) VALUES (?)`, [name]); added[key] += res.affectedRows; }
+      }
+      await audit(user, 'master.seed', 'master', null, added, r.ip);
+      return json(200, added);
     }
     let mm;
     if ((mm = p.match(/^\/api\/ems\/master\/([a-z_]+)(?:\/(\d+))?$/))) {

@@ -35,3 +35,5 @@ export const uploadDocument = (employeeId: number, label: string, file: File) =>
 export const uploadPhoto = (employeeId: number, file: File) => upload<{ photo_url: string }>(`/api/ems/employees/${employeeId}/photo`, file);
 
 export const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+
+export const seedMaster = () => api<{ departments: number; designations: number }>('/api/ems/master/seed', { method: 'POST', body: {} });

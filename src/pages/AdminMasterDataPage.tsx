@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Plus } from 'lucide-react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { ToastStack, useToasts } from '@/components/ui/Toast';
-import { addMaster, errMsg, getMaster, updateMaster } from '@/services/emsService';
+import { addMaster, errMsg, getMaster, seedMaster, updateMaster } from '@/services/emsService';
 import type { Master, MasterKind } from '@/types/ems';
 
 const KINDS: { kind: MasterKind; title: string; hint: string }[] = [
@@ -58,12 +58,18 @@ export default function AdminMasterDataPage() {
   const [err, setErr] = useState('');
   const load = useCallback(() => { getMaster(true).then((m) => { setMaster(m); setErr(''); }).catch((e) => setErr(errMsg(e))); }, []);
   useEffect(load, [load]);
+  const [seeding, setSeeding] = useState(false);
+  const seed = async () => { setSeeding(true); try { const r = await seedMaster(); toast.success(`Added ${r.departments} departments and ${r.designations} designations.`); load(); } catch (e) { toast.error(errMsg(e)); } finally { setSeeding(false); } };
   return (
     <div className="min-h-full bg-app">
       <AdminHeader active="master" subtitle="Master data" />
       <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">
         <h1 className="text-2xl font-extrabold tracking-tight">Master data</h1>
-        <p className="mb-6 mt-1 text-sm text-muted">The lists employees are organised by. Changes appear in the employee forms straight away.</p>
+        <p className="mt-1 text-sm text-muted">The lists employees are organised by. Changes appear in the employee forms straight away.</p>
+        <div className="mb-6 mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white/60 p-4">
+          <button type="button" className="btn-primary" disabled={seeding} onClick={() => void seed()}>{seeding ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}Load IEG standard lists</button>
+          <p className="min-w-0 flex-1 text-xs text-muted">Adds the departments and designations from the IEG organisation charts. Existing items are kept and nothing is duplicated. Please confirm the sub-roles with HR.</p>
+        </div>
         {err && <div className="card p-6 text-center" role="alert"><p className="font-bold">We could not load the lists</p><p className="mt-1 text-sm text-muted">{err}</p><button className="btn-primary mt-3" onClick={load}>Try again</button></div>}
         {!master && !err && <div className="grid gap-4 md:grid-cols-2" aria-busy="true">{[0, 1, 2, 3].map((i) => <div key={i} className="skeleton h-56" />)}</div>}
         {master && <div className="grid gap-5 md:grid-cols-2">{KINDS.map((k) => <Block key={k.kind} {...k} items={master[k.kind]} reload={load} toast={toast} />)}</div>}
