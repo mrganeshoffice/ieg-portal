@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import type { AttMonth, AttRecord, AttReportRow, ChatMsg, ChatPerson, HomeSummary, Holiday, LeaveBalance, LeaveRequest, LeaveType, Notice, Task, TaskComment, TeamDay, WorkSettings } from '@/types/work';
+import type { AdminOverview, AttMonth, AttRecord, AttReportRow, ChatMsg, ChatPerson, HomeSummary, Holiday, LeaveBalance, LeaveRequest, LeaveType, Notice, Task, TaskComment, TeamDay, WorkSettings } from '@/types/work';
 
 const q = (o: Record<string, unknown>) => { const p = new URLSearchParams(); for (const [k, v] of Object.entries(o)) if (v !== undefined && v !== '' && v !== null) p.set(k, String(v)); const s = p.toString(); return s ? `?${s}` : ''; };
 const post = <T,>(url: string, body: unknown = {}) => api<T>(url, { method: 'POST', body });
@@ -44,3 +44,5 @@ export const taskReport = () => api<{ rows: { employee_id: number; name: string;
 export const getSettings = () => api<WorkSettings>('/api/ems/settings');
 export const saveSettings = (body: Record<string, unknown>) => api<WorkSettings>('/api/ems/settings', { method: 'PUT', body });
 export const setPortalAccess = (id: number, full: boolean) => post(`/api/ems/employees/${id}/portal-access`, { full });
+
+export const adminOverview = () => api<AdminOverview>('/api/ems/admin/overview');

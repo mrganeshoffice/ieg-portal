@@ -14,7 +14,7 @@ export default function AdminAuditPage() {
   useEffect(() => { let live = true; setErr(''); listAudit({ q: dq || undefined, page }).then((d) => live && setData(d)).catch((e) => live && setErr(errMsg(e))); return () => { live = false; }; }, [dq, page]);
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   return (
-    <div className="min-h-full bg-app">
+    <div className="admin-page min-h-full bg-app">
       <AdminHeader active="audit" subtitle="Audit log" />
       <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">
         <h1 className="text-2xl font-extrabold tracking-tight">Audit log</h1>

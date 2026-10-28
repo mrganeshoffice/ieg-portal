@@ -61,7 +61,7 @@ export default function AdminMasterDataPage() {
   const [seeding, setSeeding] = useState(false);
   const seed = async () => { setSeeding(true); try { const r = await seedMaster(); toast.success(`Added ${r.departments} departments and ${r.designations} designations.`); load(); } catch (e) { toast.error(errMsg(e)); } finally { setSeeding(false); } };
   return (
-    <div className="min-h-full bg-app">
+    <div className="admin-page min-h-full bg-app">
       <AdminHeader active="master" subtitle="Master data" />
       <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">
         <h1 className="text-2xl font-extrabold tracking-tight">Master data</h1>

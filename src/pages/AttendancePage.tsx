@@ -12,11 +12,11 @@ import type { AttMonth, AttStatus, TeamDay, TeamRow } from '@/types/work';
 
 const toLocalInput = (iso: string | null) => { if (!iso) return ''; const d = new Date(iso); const p = (n: number) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
 
-function MyMonth({ onToast, refreshKey }: { onToast: (t: 'success' | 'error', m: string) => void; refreshKey: number }) {
-  const [month, setMonth] = useState(monthOf());
+export function MyMonth({ onToast, refreshKey, employeeId, initialMonth }: { onToast: (t: 'success' | 'error', m: string) => void; refreshKey: number; employeeId?: number; initialMonth?: string }) {
+  const [month, setMonth] = useState(initialMonth ?? monthOf());
   const [data, setData] = useState<AttMonth | null>(null);
   const [err, setErr] = useState('');
-  const load = useCallback(() => { setData(null); attendanceMonth(month).then((d) => { setData(d); setErr(''); }).catch((e) => setErr(errMsg(e))); }, [month]);
+  const load = useCallback(() => { setData(null); attendanceMonth(month, employeeId).then((d) => { setData(d); setErr(''); }).catch((e) => setErr(errMsg(e))); }, [month, employeeId]);
   useEffect(load, [load, refreshKey]);
   void onToast;
 
@@ -88,7 +88,7 @@ function Team({ canCorrect, onToast }: { canCorrect: boolean; onToast: (t: 'succ
   );
 }
 
-function CorrectModal({ row, date, onClose, onDone, onError }: { row: TeamRow; date: string; onClose: () => void; onDone: () => void; onError: (m: string) => void }) {
+export function CorrectModal({ row, date, onClose, onDone, onError }: { row: TeamRow; date: string; onClose: () => void; onDone: () => void; onError: (m: string) => void }) {
   const [ci, setCi] = useState(toLocalInput(row.check_in) || `${date}T09:30`);
   const [co, setCo] = useState(toLocalInput(row.check_out));
   const [note, setNote] = useState('');

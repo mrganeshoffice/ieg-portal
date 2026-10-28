@@ -18,3 +18,12 @@ export interface ChatPerson { user_id: number; name: string; department: string 
 export interface ChatMsg { id: number; mine: boolean; body: string; created_at: string }
 export interface WorkSettings { timezone: string; work_start: string; grace_minutes: string; full_day_hours: string; half_day_hours: string; weekly_off: string; defaults: Record<string, string>; can_edit: boolean }
 export interface AttReportRow { employee_id: number; name: string; employee_code: string | null; department: string | null; present: number; late: number; half_day: number; short: number; missed_checkout: number; leave: number; absent: number; hours: number }
+export interface AdminOverview {
+  today: string; employees: number; day_off: boolean; holiday: string | null;
+  counts: Record<'present' | 'late' | 'half_day' | 'short' | 'working' | 'missed_checkout' | 'absent' | 'leave' | 'off', number>;
+  people: { absent: { id: number; name: string; department: string | null }[]; leave: { id: number; name: string; department: string | null }[]; late: { id: number; name: string; department: string | null }[] };
+  trend: { date: string; present: number; late: number; absent: number; leave: number; day_off: boolean }[];
+  departments: { name: string; count: number }[];
+  tasks: { todo: number; in_progress: number; blocked: number; done: number; overdue: number };
+  pending_leave: number; upcoming_holidays: { date: string; name: string }[]; recent_joiners: { id: number; name: string; department: string | null }[];
+}

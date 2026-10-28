@@ -36,7 +36,7 @@ export default function AdminEmployeeDetailPage() {
   const canAdminRoles = me === 'super_admin';
 
   return (
-    <div className="min-h-full bg-app">
+    <div className="admin-page min-h-full bg-app">
       <AdminHeader active="employees" subtitle="Employee Management" />
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
         <Link to="/admin/employees" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink"><ArrowLeft size={16} />All employees</Link>

@@ -6,7 +6,7 @@ import {
 import Logo from '@/components/ui/Logo';
 import Modal from '@/components/ui/Modal';
 import { ToastStack, useToasts } from '@/components/ui/Toast';
-import AdminTabs from '@/components/admin/AdminTabs';
+import AdminHeader from '@/components/admin/AdminHeader';
 import VideoForm from '@/components/videos/VideoForm';
 import VideoPreview from '@/components/videos/VideoPreview';
 import DeleteVideoModal from '@/components/videos/DeleteVideoModal';
@@ -143,16 +143,8 @@ export default function AdminVideosPage() {
   );
 
   return (
-    <div className="min-h-full bg-app">
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-navy-900 text-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:px-8">
-          <Logo size={38} />
-          <div className="min-w-0 flex-1 leading-tight"><p className="truncate text-sm font-extrabold">Admin Portal</p><p className="truncate text-[11px] text-slate-400">Videos</p></div>
-          <AdminTabs active="videos" />
-          <span className="hidden max-w-[16rem] truncate text-xs text-slate-300 sm:block">{admin?.email}</span>
-          <button type="button" onClick={() => void logout()} className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 px-3.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"><LogOut size={16} /><span className="hidden sm:inline">Sign out</span></button>
-        </div>
-      </header>
+    <div className="admin-page min-h-full bg-app">
+      <AdminHeader active="videos" subtitle="Videos" />
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
         <div className="flex flex-wrap items-end justify-between gap-4">

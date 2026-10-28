@@ -145,7 +145,7 @@ export function createWork({ pool, json, readJson, audit, need, isAdmin }) {
   /** Returns a response, or null when the path is not one of ours. */
   async function route(r, user, qs) {
     const p = r.pathname, m = r.method; let mm;
-    if (!/^\/api\/ems\/(attendance|tasks|leave|holidays|notifications|chat|reports|settings|home)/.test(p)) return null;
+    if (!/^\/api\/ems\/(attendance|tasks|leave|holidays|notifications|chat|reports|settings|home|admin\/overview)/.test(p)) return null;
     need(user);
     const cfg = await settings();
     const todayStr = dateIn(cfg.timezone);
@@ -162,6 +162,35 @@ export function createWork({ pool, json, readJson, audit, need, isAdmin }) {
       for (const [k, v] of Object.entries(next)) await pool.query('INSERT INTO settings (k, v) VALUES (?,?) ON DUPLICATE KEY UPDATE v = VALUES(v)', [k, v]);
       cache.v = null; await audit(user, 'settings.update', 'settings', null, next, r.ip);
       return json(200, { ...(await settings()), defaults: SETTING_DEFAULTS, can_edit: true });
+    }
+
+    /* ===== admin overview (dashboard) ===== */
+    if (p === '/api/ems/admin/overview' && m === 'GET') {
+      if (!isAdmin(user)) throw new HttpError(403, 'You do not have permission to do that.');
+      const [emps] = await pool.query("SELECT e.id, e.first_name, e.last_name, e.employee_code, COALESCE(e.joining_date, DATE(e.created_at)) AS joining_date, e.created_at, d.name AS department FROM employees e JOIN users u ON u.id = e.user_id LEFT JOIN departments d ON d.id = e.department_id WHERE u.is_active = 1");
+      const off = new Set(String(cfg.weekly_off).split(',').filter((x) => x !== '').map(Number));
+      const from7 = addDays(todayStr, -6);
+      const att = await attendanceRange(null, from7, todayStr); const lv = await approvedLeave(null, from7, todayStr); const hol = await holidaySet(from7, todayStr);
+      const statusOn = (e, d) => {
+        if (e.joining_date && e.joining_date > d) return null;
+        const a = att.find((x) => x.employee_id === e.id && x.work_date === d);
+        if (a) return attendanceStatus(a, cfg, todayStr);
+        if (lv.some((l) => l.employee_id === e.id && l.start_date <= d && l.end_date >= d)) return 'leave';
+        return off.has(weekday(d)) || hol.has(d) ? 'off' : 'absent';
+      };
+      const counts = { present: 0, late: 0, half_day: 0, short: 0, working: 0, missed_checkout: 0, absent: 0, leave: 0, off: 0 };
+      const people = { absent: [], leave: [], late: [] };
+      for (const e of emps) { const st = statusOn(e, todayStr); if (!st) continue; if (counts[st] !== undefined) counts[st]++; if (people[st] && people[st].length < 8) people[st].push({ id: e.id, name: employeeName(e), department: e.department }); }
+      const trend = []; for (let i = 6; i >= 0; i--) { const d = addDays(todayStr, -i); const t = { date: d, present: 0, late: 0, absent: 0, leave: 0, day_off: off.has(weekday(d)) || hol.has(d) }; for (const e of emps) { const st = statusOn(e, d); if (st === 'present' || st === 'working' || st === 'half_day' || st === 'short' || st === 'missed_checkout') t.present++; else if (st === 'late') t.late++; else if (st === 'absent') t.absent++; else if (st === 'leave') t.leave++; } trend.push(t); }
+      const deptMap = new Map(); for (const e of emps) deptMap.set(e.department || 'Not set', (deptMap.get(e.department || 'Not set') || 0) + 1);
+      const departments = [...deptMap].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+      const t = (await pool.query("SELECT SUM(status = 'todo') AS todo, SUM(status = 'in_progress') AS in_progress, SUM(status = 'blocked') AS blocked, SUM(status = 'done') AS done, SUM(status <> 'done' AND due_date < ?) AS overdue FROM tasks", [todayStr]))[0][0];
+      const pending = Number((await pool.query("SELECT COUNT(*) AS n FROM leave_requests WHERE status = 'pending'"))[0][0].n);
+      const [nh] = await pool.query('SELECT holiday_date, name FROM holidays WHERE holiday_date >= ? ORDER BY holiday_date LIMIT 3', [todayStr]);
+      const [recent] = await pool.query('SELECT e.id, e.first_name, e.last_name, d.name AS department, e.created_at FROM employees e JOIN users u ON u.id = e.user_id LEFT JOIN departments d ON d.id = e.department_id WHERE u.is_active = 1 ORDER BY e.id DESC LIMIT 5');
+      return json(200, { today: todayStr, employees: emps.length, day_off: off.has(weekday(todayStr)) || hol.has(todayStr), holiday: hol.get(todayStr) || null, counts, people, trend, departments,
+        tasks: { todo: Number(t.todo || 0), in_progress: Number(t.in_progress || 0), blocked: Number(t.blocked || 0), done: Number(t.done || 0), overdue: Number(t.overdue || 0) }, pending_leave: pending,
+        upcoming_holidays: nh.map((h) => ({ date: h.holiday_date, name: h.name })), recent_joiners: recent.map((r) => ({ id: r.id, name: employeeName(r), department: r.department })) });
     }
 
     /* ===== home summary ===== */

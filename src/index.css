@@ -58,3 +58,5 @@ body { @apply bg-app font-sans text-ink antialiased; }
 @keyframes core-glow { 0%, 100% { filter: drop-shadow(0 0 10px rgba(31,162,232,.55)) drop-shadow(0 0 26px rgba(52,199,123,.25)); } 50% { filter: drop-shadow(0 0 18px rgba(31,162,232,.8)) drop-shadow(0 0 38px rgba(52,199,123,.4)); } }
 .core-glow { animation: core-glow 3s ease-in-out infinite; }
 
+
+@media (min-width: 1024px) { .admin-page { padding-left: 16rem; } }

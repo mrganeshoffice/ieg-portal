@@ -126,7 +126,7 @@ export default function AdminEmployeesPage() {
   const th = 'px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-muted';
 
   return (
-    <div className="min-h-full bg-app">
+    <div className="admin-page min-h-full bg-app">
       <AdminHeader active="employees" subtitle="Employee Management" />
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
         <div className="flex flex-wrap items-end justify-between gap-4">

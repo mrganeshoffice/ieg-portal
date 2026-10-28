@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
   useEffect(() => { void isAdminConfigured().then(setConfigured); }, []);
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
 
-  if (status === 'authed') return <Navigate to="/admin/dashboard" replace />;
+  if (status === 'authed') return <Navigate to="/admin/home" replace />;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -33,7 +33,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     const res = await login(email, password, remember);
     setLoading(false);
-    if (res.ok) nav('/admin/dashboard', { replace: true });
+    if (res.ok) nav('/admin/home', { replace: true });
     else setErrors({ form: res.error });
   };
 

@@ -19,6 +19,8 @@ const FactoryLayoutPage = lazy(() => import('./pages/FactoryLayoutPage'));
 const OfficeLayoutPage = lazy(() => import('./pages/OfficeLayoutPage'));
 const FactoryDimensionsPage = lazy(() => import('./pages/FactoryDimensionsPage'));
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
+const AdminHomePage = lazy(() => import('./pages/AdminHomePage'));
+const AdminAttendancePage = lazy(() => import('./pages/AdminAttendancePage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminVideosPage = lazy(() => import('./pages/AdminVideosPage'));
 const AdminEmployeesPage = lazy(() => import('./pages/AdminEmployeesPage'));
@@ -77,13 +79,14 @@ export default function App() {
           <Route path="/admin/employees/:id" element={<AdminProtectedRoute><AdminEmployeeDetailPage /></AdminProtectedRoute>} />
           <Route path="/admin/master-data" element={<AdminProtectedRoute><AdminMasterDataPage /></AdminProtectedRoute>} />
           <Route path="/admin/audit" element={<AdminProtectedRoute><AdminAuditPage /></AdminProtectedRoute>} />
-          <Route path="/admin/attendance" element={<AdminProtectedRoute><AdminWorkFrame tab="attendance" subtitle="Attendance"><AttendancePage /></AdminWorkFrame></AdminProtectedRoute>} />
+          <Route path="/admin/attendance" element={<AdminProtectedRoute><AdminAttendancePage /></AdminProtectedRoute>} />
           <Route path="/admin/tasks" element={<AdminProtectedRoute><AdminWorkFrame tab="tasks" subtitle="Tasks"><TasksPage /></AdminWorkFrame></AdminProtectedRoute>} />
           <Route path="/admin/leave" element={<AdminProtectedRoute><AdminWorkFrame tab="leave" subtitle="Leave and holidays"><LeavePage /></AdminWorkFrame></AdminProtectedRoute>} />
           <Route path="/admin/reports" element={<AdminProtectedRoute><AdminWorkFrame tab="reports" subtitle="Reports"><ReportsPage /></AdminWorkFrame></AdminProtectedRoute>} />
           <Route path="/admin/chat" element={<AdminProtectedRoute><AdminWorkFrame tab="chat" subtitle="Chat"><ChatPage /></AdminWorkFrame></AdminProtectedRoute>} />
           <Route path="/admin/policy" element={<AdminProtectedRoute><AdminWorkFrame tab="policy" subtitle="Policy and holidays"><PolicyPage /></AdminWorkFrame></AdminProtectedRoute>} />
-          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin" element={<Navigate to="/admin/home" replace />} />
+          <Route path="/admin/home" element={<AdminProtectedRoute><AdminHomePage /></AdminProtectedRoute>} />
         </Route>
         <Route element={<Protected><AppLayout /></Protected>}>
           <Route index element={<Landing />} />
