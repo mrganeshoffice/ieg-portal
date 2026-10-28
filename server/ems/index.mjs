@@ -6,7 +6,7 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { COOKIE as ADMIN_COOKIE, HttpError, hashPassword } from '../core.mjs';
+import { COOKIE as ADMIN_COOKIE, HttpError, hashPassword, pwFingerprint } from '../core.mjs';
 import { makeSessions, parseCookies } from '../session.mjs';
 import { connect, tx } from './db.mjs';
 import { createWork } from './work.mjs';
@@ -136,7 +136,7 @@ export async function createEms({ getSecret, dataDir, legacyAdmins = async () =>
       if (u && u.is_active && u.token_version === p.tv) return u;
     }
     const a = await verify(c[ADMIN_COOKIE]); // the admin panel's own sign-in also counts
-    if (a?.email) { const u = await userByEmail(a.email); if (u && u.is_active && isAdmin(u)) return u; }
+    if (a?.email) { const u = await userByEmail(a.email); if (u && u.is_active && isAdmin(u) && a.fp === pwFingerprint(u.password_hash)) return u; }
     return null;
   }
   const sessionCookie = async (u, remember, https) => {
@@ -482,7 +482,16 @@ export async function createEms({ getSecret, dataDir, legacyAdmins = async () =>
         const dto = toDto(e, user);
         if (isAdmin(user) || user.employee_id === e.id) {
           dto.documents = (await pool.query('SELECT id, label, original_name, mime, size_bytes, created_at FROM employee_documents WHERE employee_id = ? ORDER BY id DESC', [id]))[0];
-          dto.history = (await pool.query('SELECT field, old_value, new_value, changed_at FROM employment_history WHERE employee_id = ? ORDER BY id DESC LIMIT 50', [id]))[0];
+          const hist = (await pool.query('SELECT field, old_value, new_value, changed_at FROM employment_history WHERE employee_id = ? ORDER BY id DESC LIMIT 50', [id]))[0];
+          // show names instead of record numbers for linked items (department, designation, manager, ...)
+          const lookup = { department_id: ['departments', 'name'], designation_id: ['designations', 'name'], employment_type_id: ['lookups', 'name'], work_location_id: ['lookups', 'name'], shift_id: ['lookups', 'name'] };
+          const ids = { departments: new Set(), designations: new Set(), lookups: new Set(), managers: new Set() };
+          for (const h of hist) { const L = lookup[h.field]; for (const v of [h.old_value, h.new_value]) if (/^\d+$/.test(v ?? '')) { if (L) ids[L[0]].add(Number(v)); else if (h.field === 'manager_id') ids.managers.add(Number(v)); } }
+          const names = { departments: new Map(), designations: new Map(), lookups: new Map(), managers: new Map() };
+          for (const t of ['departments', 'designations', 'lookups']) if (ids[t].size) for (const row of (await pool.query(`SELECT id, name FROM ${t} WHERE id IN (${[...ids[t]].map(() => '?').join(',')})`, [...ids[t]]))[0]) names[t].set(row.id, row.name);
+          if (ids.managers.size) for (const row of (await pool.query(`SELECT id, CONCAT_WS(' ', first_name, last_name) AS name FROM employees WHERE id IN (${[...ids.managers].map(() => '?').join(',')})`, [...ids.managers]))[0]) names.managers.set(row.id, row.name);
+          const nm = (h, v) => { if (v == null || !/^\d+$/.test(v)) return v; const L = lookup[h.field]; return (L ? names[L[0]].get(Number(v)) : h.field === 'manager_id' ? names.managers.get(Number(v)) : null) ?? v; };
+          dto.history = hist.map((h) => ({ ...h, old_value: nm(h, h.old_value), new_value: nm(h, h.new_value) }));
         }
         return json(200, dto);
       }

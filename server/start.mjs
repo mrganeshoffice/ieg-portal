@@ -7,6 +7,7 @@ import { stat } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createApiHandler } from './api.mjs';
+import { securityHeaders } from './headers.mjs';
 
 const DIST = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 const PORT = Number(process.env.PORT) || 3000;
@@ -26,7 +27,7 @@ async function serveStatic(req, res) {
   res.writeHead(200, {
     'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Content-Length': st.size,
     'Cache-Control': file.includes(`${path.sep}assets${path.sep}`) ? 'public, max-age=31536000, immutable' : 'no-cache',
-    'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin',
+    ...securityHeaders(req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https'),
   });
   if (req.method === 'HEAD') return res.end();
   createReadStream(file).pipe(res);

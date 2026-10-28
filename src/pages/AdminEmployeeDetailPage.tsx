@@ -99,7 +99,7 @@ export default function AdminEmployeeDetailPage() {
                     ))}
                   </ul>
                 )}
-                <p className="mt-3 text-[11px] text-muted">Shows raw record numbers for linked items such as department. A fuller history view is planned.</p>
+                
               </section>
             </aside>
           </div>

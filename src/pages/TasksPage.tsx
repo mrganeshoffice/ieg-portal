@@ -76,7 +76,8 @@ export default function TasksPage() {
   const { session } = useAuth();
   const toast = useToasts();
   const lead = session?.role !== 'employee'; const admin = session?.role === 'admin' || session?.role === 'super_admin';
-  const [view, setView] = useState<'mine' | 'assigned' | 'team' | 'all'>('mine');
+  const [view, setView] = useState<'mine' | 'assigned' | 'team' | 'all'>(admin ? 'all' : 'mine');
+  const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'open' | 'all'>('open');
   const [items, setItems] = useState<Task[] | null>(null);
   const [err, setErr] = useState('');
@@ -95,9 +96,10 @@ export default function TasksPage() {
         <Tabs value={view} onChange={setView} tabs={tabs} />
         <div className="mb-5 inline-flex gap-1 rounded-2xl border border-line bg-surface p-1 text-sm font-semibold">{(['open', 'all'] as const).map((f) => <button key={f} onClick={() => setFilter(f)} className={`rounded-xl px-3 py-1.5 ${filter === f ? 'bg-app text-ink' : 'text-muted'}`}>{f === 'open' ? 'Open' : 'All'}</button>)}</div>
       </div>
+      {admin && <input className="input mb-4 max-w-sm" placeholder="Search by title or person" aria-label="Search tasks" value={search} onChange={(e) => setSearch(e.target.value)} />}
       {err ? <ErrorBox message={err} onRetry={load} /> : !items ? <Loading /> : items.length === 0 ? <Empty title={filter === 'open' ? 'No open tasks' : 'No tasks yet'} hint="Create a task to get started." action={<button className="btn-primary" onClick={() => setForm('new')}><Plus size={16} />New task</button>} /> : (
         <ul className="space-y-2.5">
-          {items.map((x) => (
+          {items.filter((x) => !search.trim() || `${x.title} ${x.assignee.name} ${x.created_by.name}`.toLowerCase().includes(search.trim().toLowerCase())).map((x) => (
             <li key={x.id} className="card flex flex-wrap items-center gap-3 p-4">
               <button className="min-w-0 flex-1 text-left" onClick={() => setOpen(x)}>
                 <p className={`truncate font-bold ${x.status === 'done' ? 'text-muted line-through' : ''}`}>{x.title}</p>

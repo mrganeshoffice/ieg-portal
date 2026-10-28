@@ -13,7 +13,7 @@ export default function AdminHeader({ active, subtitle }: { active: AdminTabKey;
         <div className="hidden min-w-0 flex-1 leading-tight sm:block"><p className="truncate text-sm font-extrabold">Admin Portal</p><p className="truncate text-[11px] text-slate-400">{subtitle}</p></div>
         <div className="min-w-0 flex-1 sm:flex-none"><AdminTabs active={active} /></div>
         <span className="hidden max-w-[14rem] truncate text-xs text-slate-300 lg:block">{admin?.email}</span>
-        <button type="button" onClick={() => void logout()} className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 px-3.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" aria-label="Sign out"><LogOut size={16} /><span className="hidden sm:inline">Sign out</span></button>
+        <button type="button" onClick={() => void logout()} className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border border-white/15 px-3.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" aria-label="Sign out"><LogOut size={16} /><span className="hidden sm:inline">Sign out</span></button>
       </div>
     </header>
   );

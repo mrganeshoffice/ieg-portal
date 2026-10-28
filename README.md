@@ -68,3 +68,12 @@ Added on top of the EMS (migration `002_work_modules`, applied automatically on 
 **Who sees what.** Everyone sees the work pages. The company portal pages (org charts, layouts, products, videos) are shown only to accounts with full portal access: `ieg@ieg.com` always has it, and a super admin can grant or remove it per person on the employee page. To create that account: Admin → Employees → Add employee with email `ieg@ieg.com`, then send the setup link. Note: this hides pages in the app; the org-chart content itself ships inside the web app bundle, so treat it as internal-but-not-secret.
 
 Tests: `node server/ems/test-work.mjs` (84 checks) after `test-api.mjs`, against a throwaway database.
+
+### Security notes
+
+- Every API route re-checks sign-in, role and record ownership on the server. Employees get 404 for other people's records.
+- Passwords: scrypt, 10+ characters with letters and a number, never shown or logged. Changing/resetting a password signs out all older sessions, including old admin-panel cookies.
+- Login limits: 10 wrong tries per account and 40 per IP in 10 minutes. The client IP is taken from the proxy's `X-Forwarded-For` entry `TRUST_PROXY_HOPS` places from the right (default 1; use 2 behind Cloudflare plus another proxy, 0 with no proxy).
+- Responses carry a Content-Security-Policy (no inline scripts, no framing), `X-Frame-Options`, `nosniff`, a strict `Referrer-Policy` and HSTS over HTTPS. If you embed videos from a host other than YouTube or Vimeo, add it to `frame-src` in `server/headers.mjs`.
+- Run before deploying changes: `node server/ems/test-api.mjs`, `test-work.mjs`, `test-security.mjs` against a throwaway database (restart the server between runs; the tests trip the login limiter on purpose).
+- Known and accepted: `react-router` 6.x has a moderate advisory about redirects built from untrusted input; this app never redirects to user-supplied URLs. Locking an account after repeated wrong tries also lets someone lock a known email for 10 minutes; this is the usual trade-off.

@@ -5,7 +5,7 @@
  * A "storage" adapter provides: list, get, put, remove, putImage, getImage, removeImage.
  * `videoStorage` provides the same list/get/put/remove for the Videos module (images are shared).
  */
-import { randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { makeSessions, parseCookies } from './session.mjs';
 
@@ -15,6 +15,8 @@ export class HttpError extends Error { constructor(status, message) { super(mess
 const bad = (m) => { throw new HttpError(400, m); };
 
 export const COOKIE = 'ieg_admin';
+/** Fingerprint of a password hash: stored in the admin cookie so changing or resetting the password signs the old cookie out. */
+export const pwFingerprint = (hash) => createHash('sha256').update(String(hash)).digest('hex').slice(0, 16);
 export const MAX_IMAGE = 4 * 1024 * 1024; // 4 MB (keeps the upload under Netlify's 6 MB request limit once base64-encoded)
 export const MAX_BODY = 8 * 1024 * 1024;
 const DAY = 24 * 60 * 60 * 1000;
@@ -76,7 +78,7 @@ export function createCore({ storage, videoStorage, getAdmins, getSecret, resolv
   /** The admin cookie, or (when the EMS module is active) a signed-in admin/super-admin user session. */
   async function currentAdmin(r) {
     const p = await verify(parseCookies(r.headers.cookie)[COOKIE]);
-    if (p && (await getAdmins()).some((a) => a.email === p.email)) return { email: p.email }; // removed admins lose access at once
+    if (p && (await getAdmins()).some((a) => a.email === p.email && p.fp === pwFingerprint(a.hash))) return { email: p.email }; // removed admins lose access at once
     return resolveAdmin ? resolveAdmin(r.headers) : null;
   }
   async function checkLogin(email, password) {
@@ -89,8 +91,8 @@ export function createCore({ storage, videoStorage, getAdmins, getSecret, resolv
 
   /* ---- login throttling (per server instance) ---- */
   const fails = new Map();
-  const WINDOW = 10 * 60 * 1000, MAX_FAILS = 8;
-  const throttled = (ip) => { const f = fails.get(ip); if (!f) return false; if (Date.now() - f.first > WINDOW) { fails.delete(ip); return false; } return f.count >= MAX_FAILS; };
+  const WINDOW = 10 * 60 * 1000, MAX_FAILS = 10, IP_MAX_FAILS = 40; // one office often shares one IP
+  const throttled = (ip) => { const f = fails.get(ip); if (!f) return false; if (Date.now() - f.first > WINDOW) { fails.delete(ip); return false; } return f.count >= (String(ip).startsWith('e:') ? MAX_FAILS : IP_MAX_FAILS); };
   const noteFail = (ip) => { const f = fails.get(ip); if (!f || Date.now() - f.first > WINDOW) fails.set(ip, { count: 1, first: Date.now() }); else f.count++; };
 
   const json = (status, obj, headers = {}) => ({ status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers }, body: JSON.stringify(obj) });
@@ -133,11 +135,13 @@ export function createCore({ storage, videoStorage, getAdmins, getSecret, resolv
     if (m === 'POST' && p === '/api/admin/login') {
       if (throttled(r.ip)) throw new HttpError(429, 'Too many attempts. Please wait a few minutes and try again.');
       const b = readJson(r);
+      const acct = `e:${String(b.email ?? '').trim().toLowerCase().slice(0, 190)}`;
+      if (throttled(acct)) throw new HttpError(429, 'Too many attempts for this account. Please wait a few minutes and try again.');
       const admin = typeof b.email === 'string' && typeof b.password === 'string' && b.password.length <= 200 ? await checkLogin(b.email, b.password) : null;
-      if (!admin) { noteFail(r.ip); throw new HttpError(401, 'Incorrect email or password. Check your details and try again.'); }
-      fails.delete(r.ip);
+      if (!admin) { noteFail(r.ip); noteFail(acct); throw new HttpError(401, 'Incorrect email or password. Check your details and try again.'); }
+      fails.delete(r.ip); fails.delete(acct);
       const remember = b.remember === true;
-      const token = await sign({ email: admin.email, exp: Date.now() + (remember ? 30 * DAY : 12 * 60 * 60 * 1000) });
+      const token = await sign({ email: admin.email, fp: pwFingerprint(admin.hash), exp: Date.now() + (remember ? 30 * DAY : 12 * 60 * 60 * 1000) });
       return json(200, { email: admin.email }, { 'Set-Cookie': `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax${remember ? `; Max-Age=${30 * 24 * 3600}` : ''}${r.https ? '; Secure' : ''}` });
     }
     if (m === 'POST' && p === '/api/admin/logout') return json(200, { ok: true }, { 'Set-Cookie': `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0` });

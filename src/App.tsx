@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { AdminAuthProvider } from './context/AdminAuthContext';
+import AdminWorkFrame from './components/admin/AdminWorkFrame';
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import LoginPage from './pages/LoginPage';
@@ -76,6 +77,12 @@ export default function App() {
           <Route path="/admin/employees/:id" element={<AdminProtectedRoute><AdminEmployeeDetailPage /></AdminProtectedRoute>} />
           <Route path="/admin/master-data" element={<AdminProtectedRoute><AdminMasterDataPage /></AdminProtectedRoute>} />
           <Route path="/admin/audit" element={<AdminProtectedRoute><AdminAuditPage /></AdminProtectedRoute>} />
+          <Route path="/admin/attendance" element={<AdminProtectedRoute><AdminWorkFrame tab="attendance" subtitle="Attendance"><AttendancePage /></AdminWorkFrame></AdminProtectedRoute>} />
+          <Route path="/admin/tasks" element={<AdminProtectedRoute><AdminWorkFrame tab="tasks" subtitle="Tasks"><TasksPage /></AdminWorkFrame></AdminProtectedRoute>} />
+          <Route path="/admin/leave" element={<AdminProtectedRoute><AdminWorkFrame tab="leave" subtitle="Leave and holidays"><LeavePage /></AdminWorkFrame></AdminProtectedRoute>} />
+          <Route path="/admin/reports" element={<AdminProtectedRoute><AdminWorkFrame tab="reports" subtitle="Reports"><ReportsPage /></AdminWorkFrame></AdminProtectedRoute>} />
+          <Route path="/admin/chat" element={<AdminProtectedRoute><AdminWorkFrame tab="chat" subtitle="Chat"><ChatPage /></AdminWorkFrame></AdminProtectedRoute>} />
+          <Route path="/admin/policy" element={<AdminProtectedRoute><AdminWorkFrame tab="policy" subtitle="Policy and holidays"><PolicyPage /></AdminWorkFrame></AdminProtectedRoute>} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
         <Route element={<Protected><AppLayout /></Protected>}>

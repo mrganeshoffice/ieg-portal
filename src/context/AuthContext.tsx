@@ -9,6 +9,8 @@ interface AuthCtx {
   changePassword: (current: string, password: string) => Promise<AuthResult>;
   setupPassword: (token: string, password: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
+  /** Ask the server again who is signed in (used after signing in through the admin panel). */
+  reload: () => Promise<void>;
 }
 const Ctx = createContext<AuthCtx | null>(null);
 
@@ -27,7 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const changePassword = useCallback(async (c: string, p: string) => accept(await changePw(c, p)), [accept]);
   const setupPassword = useCallback(async (t: string, p: string) => accept(await setupPw(t, p)), [accept]);
   const logout = useCallback(async () => { await clearSession(); setSession(null); setStatus('anon'); }, []);
-  const value = useMemo(() => ({ status, session, login, changePassword, setupPassword, logout }), [status, session, login, changePassword, setupPassword, logout]);
+  const reload = useCallback(async () => { try { const s = await loadSession(); setSession(s); setStatus(s ? 'authed' : 'anon'); } catch { setStatus('anon'); } }, []);
+  const value = useMemo(() => ({ status, session, login, changePassword, setupPassword, logout, reload }), [status, session, login, changePassword, setupPassword, logout, reload]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 export const useAuth = () => { const c = useContext(Ctx); if (!c) throw new Error('useAuth outside AuthProvider'); return c; };
