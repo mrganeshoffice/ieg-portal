@@ -101,7 +101,7 @@ export function CorrectModal({ row, date, onClose, onDone, onError }: { row: Tea
   };
   return (
     <Modal open onClose={onClose} title="Correct attendance" size="sm" description={`${row.name} · ${date}. The employee is notified and the change is logged.`}>
-      <div className="space-y-4">
+      <div className="space-y-4 p-5 sm:p-7">
         <label className="block"><span className="mb-1.5 block text-xs font-semibold text-muted">Check-in</span><input type="datetime-local" className="input" value={ci} onChange={(e) => setCi(e.target.value)} data-autofocus /></label>
         <label className="block"><span className="mb-1.5 block text-xs font-semibold text-muted">Check-out (optional)</span><input type="datetime-local" className="input" value={co} onChange={(e) => setCo(e.target.value)} /></label>
         <label className="block"><span className="mb-1.5 block text-xs font-semibold text-muted">Reason</span><input className="input" value={note} maxLength={255} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Forgot to punch out" /></label>

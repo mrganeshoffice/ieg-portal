@@ -120,7 +120,7 @@ function Daily({ onToast }: { onToast: (t: 'success' | 'error', m: string) => vo
         </>
       )}
       {edit && <CorrectModal row={edit} date={date} onClose={() => setEdit(null)} onDone={() => { setEdit(null); onToast('success', 'Attendance corrected.'); load(true); }} onError={(m) => onToast('error', m)} />}
-      {view && <Modal open onClose={() => setView(null)} title={view.name} size="xl" description={`${view.department ?? 'No department'} · ${view.employee_code ?? ''}`}><MyMonth employeeId={view.employee_id} initialMonth={date.slice(0, 7)} refreshKey={0} onToast={onToast} /></Modal>}
+      {view && <Modal open onClose={() => setView(null)} title={view.name} size="xl" description={`${view.department ?? 'No department'} · ${view.employee_code ?? ''}`}><div className="p-5 sm:p-7"><MyMonth employeeId={view.employee_id} initialMonth={date.slice(0, 7)} refreshKey={0} onToast={onToast} /></div></Modal>}
     </>
   );
 }
@@ -167,7 +167,7 @@ function Monthly({ onToast }: { onToast: (t: 'success' | 'error', m: string) => 
           )}
         </>
       )}
-      {view && <Modal open onClose={() => setView(null)} title={view.name} size="xl" description={`${view.department ?? 'No department'} · ${view.employee_code ?? ''}`}><MyMonth employeeId={view.employee_id} initialMonth={month} refreshKey={0} onToast={onToast} /></Modal>}
+      {view && <Modal open onClose={() => setView(null)} title={view.name} size="xl" description={`${view.department ?? 'No department'} · ${view.employee_code ?? ''}`}><div className="p-5 sm:p-7"><MyMonth employeeId={view.employee_id} initialMonth={month} refreshKey={0} onToast={onToast} /></div></Modal>}
     </>
   );
 }

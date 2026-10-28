@@ -6,8 +6,8 @@ export interface TeamDay { date: string; day_off: boolean; holiday: string | nul
 export interface HomeSummary { today: string; attendance: AttRecord | null; open_tasks: number; overdue_tasks: number; pending_leave_to_decide: number; unread_notifications: number; unread_messages: number; next_holiday: { holiday_date: string; name: string } | null }
 export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high';
-export interface Task { id: number; title: string; description: string | null; priority: TaskPriority; status: TaskStatus; due_date: string | null; completed_at: string | null; created_at: string; updated_at: string; created_by: { id: number; name: string }; assignee: { id: number; name: string }; overdue: boolean }
-export interface TaskComment { id: number; body: string; created_at: string; author: string }
+export interface Task { id: number; title: string; description: string | null; priority: TaskPriority; status: TaskStatus; due_date: string | null; completed_at: string | null; created_at: string; updated_at: string; created_by: { id: number; name: string }; assignee: { id: number; name: string }; project: { id: number; name: string } | null; overdue: boolean }
+export interface TaskComment { id: number; body: string; created_at: string; author: string; mine: boolean }
 export interface LeaveType { id: number; name: string; annual_quota: number; is_active: boolean }
 export interface LeaveBalance { leave_type_id: number; name: string; quota: number; used: number; pending: number; remaining: number }
 export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
@@ -27,3 +27,12 @@ export interface AdminOverview {
   tasks: { todo: number; in_progress: number; blocked: number; done: number; overdue: number };
   pending_leave: number; upcoming_holidays: { date: string; name: string }[]; recent_joiners: { id: number; name: string; department: string | null }[];
 }
+export type ProjectStatus = 'planning' | 'active' | 'on_hold' | 'completed';
+export interface ProjectMember { id: number; name: string; role: 'lead' | 'member'; total?: number; done?: number; in_progress?: number; blocked?: number; overdue?: number }
+export interface Project { id: number; name: string; description: string | null; status: ProjectStatus; start_date: string | null; due_date: string | null; created_at: string; created_by: { id: number; name: string }; members: ProjectMember[]; tasks: { total: number; done: number; overdue: number }; progress: number; can_manage: boolean }
+export interface WorkLog { id: number; date: string; summary: string; hours: number | null; project: { id: number; name: string } | null; task: { id: number; title: string } | null; created_at: string }
+export interface TaskActivity { id: number; kind: 'created' | 'status' | 'assigned'; from: string | null; to: string | null; at: string; task: { id: number; title: string }; project: { id: number; name: string } | null }
+export interface DayLog { date: string; employee: { id: number; name: string; department: string | null }; attendance: (AttRecord & { status: AttStatus }) | null; logs: WorkLog[]; activity: TaskActivity[]; due_tasks: { id: number; title: string; status: TaskStatus; priority: TaskPriority; project: string | null }[]; open_tasks: number; totals: { logs: number; hours: number; completed: number; changed: number } }
+export interface LogRange { from: string; to: string; days: { date: string; logs: number; hours: number; completed: number; changed: number; attendance: AttStatus | null }[] }
+export interface TeamLogRow { employee_id: number; name: string; employee_code: string | null; department: string | null; logs: number; hours: number; completed: number; changed: number; attendance: AttStatus | null; latest: { summary: string; project: string | null }[] }
+export interface TeamLog { date: string; rows: TeamLogRow[]; summary: { total: number; updated: number; missing: number; hours: number; completed: number } }

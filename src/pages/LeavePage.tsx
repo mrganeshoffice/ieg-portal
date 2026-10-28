@@ -23,7 +23,7 @@ function ApplyModal({ types, onClose, onDone, onError }: { types: LeaveType[]; o
   };
   return (
     <Modal open onClose={onClose} title="Apply for leave" size="sm" description="Your manager (or HR) is notified to approve it.">
-      <div className="space-y-4">
+      <div className="space-y-4 p-5 sm:p-7">
         <label className="block"><span className="mb-1.5 block text-xs font-semibold text-muted">Leave type</span><select className="input" value={f.leave_type_id} onChange={(e) => setF({ ...f, leave_type_id: e.target.value })} data-autofocus>{types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.half_day} onChange={(e) => setF({ ...f, half_day: e.target.checked })} />Half day</label>
         <div className="grid gap-4 sm:grid-cols-2">

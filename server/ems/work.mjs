@@ -5,6 +5,7 @@
  * an admin / super admin sees everyone's.
  */
 import { HttpError } from '../core.mjs';
+import { createProjects } from './projects.mjs';
 
 const ADMIN = ['super_admin', 'admin'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -112,14 +113,15 @@ export function createWork({ pool, json, readJson, audit, need, isAdmin }) {
   /* ---------------------------------- tasks ---------------------------------- */
   const TASK_STATUS = ['todo', 'in_progress', 'blocked', 'done'];
   const TASK_PRIORITY = ['low', 'medium', 'high'];
-  const taskSql = `SELECT t.*, ca.first_name AS c_first, ca.last_name AS c_last, au.first_name AS a_first, au.last_name AS a_last, au.manager_id AS assignee_manager
-     FROM tasks t JOIN employees ca ON ca.id = t.created_by JOIN employees au ON au.id = t.assignee_id`;
-  const taskDto = (t) => ({ id: t.id, title: t.title, description: t.description, priority: t.priority, status: t.status, due_date: t.due_date, completed_at: iso(t.completed_at), created_at: iso(t.created_at), updated_at: iso(t.updated_at), created_by: { id: t.created_by, name: employeeName({ first_name: t.c_first, last_name: t.c_last }) }, assignee: { id: t.assignee_id, name: employeeName({ first_name: t.a_first, last_name: t.a_last }) }, overdue: !!t.due_date && t.status !== 'done' && t.due_date < dateIn('Asia/Kolkata') });
+  const taskSql = `SELECT t.*, ca.first_name AS c_first, ca.last_name AS c_last, au.first_name AS a_first, au.last_name AS a_last, au.manager_id AS assignee_manager, pr.name AS project_name
+     FROM tasks t JOIN employees ca ON ca.id = t.created_by JOIN employees au ON au.id = t.assignee_id LEFT JOIN projects pr ON pr.id = t.project_id`;
+  const taskDto = (t) => ({ id: t.id, title: t.title, description: t.description, priority: t.priority, status: t.status, due_date: t.due_date, completed_at: iso(t.completed_at), created_at: iso(t.created_at), updated_at: iso(t.updated_at), created_by: { id: t.created_by, name: employeeName({ first_name: t.c_first, last_name: t.c_last }) }, assignee: { id: t.assignee_id, name: employeeName({ first_name: t.a_first, last_name: t.a_last }) }, project: t.project_id ? { id: t.project_id, name: t.project_name } : null, overdue: !!t.due_date && t.status !== 'done' && t.due_date < dateIn('Asia/Kolkata') });
   async function loadTask(u, id) {
     const [r] = await pool.query(`${taskSql} WHERE t.id = ?`, [id]); const t = r[0];
     if (!t) throw new HttpError(404, 'Not found.');
     const mine = u.employee_id;
-    const ok = isAdmin(u) || t.created_by === mine || t.assignee_id === mine || (u.role === 'manager' && t.assignee_manager === mine);
+    let ok = isAdmin(u) || t.created_by === mine || t.assignee_id === mine || (u.role === 'manager' && t.assignee_manager === mine);
+    if (t.project_id) { const a = await projects.accessOrNull(u, t.project_id); t._plevel = a ? a.level : null; if (a) ok = true; }
     if (!ok) throw new HttpError(404, 'Not found.');
     return t;
   }
@@ -143,12 +145,16 @@ export function createWork({ pool, json, readJson, audit, need, isAdmin }) {
 
   /* ---------------------------------- router ---------------------------------- */
   /** Returns a response, or null when the path is not one of ours. */
+  const projects = createProjects({ pool, json, readJson, audit, isAdmin, notify, empInfo, employeeName, scopeIds, canSeeEmployee, validDate, clampStr, idOf, bad, iso, toDate, dateIn, addDays, attendanceStatus, attDto, attendanceRange });
+  const logActivity = (taskId, empId, kind, from, to) => pool.query('INSERT INTO task_activity (task_id, employee_id, kind, from_value, to_value) VALUES (?,?,?,?,?)', [taskId, empId, kind, from ?? null, to == null ? null : String(to).slice(0, 160)]).catch((e) => console.error('[ems] activity failed', e.message));
+
   async function route(r, user, qs) {
     const p = r.pathname, m = r.method; let mm;
-    if (!/^\/api\/ems\/(attendance|tasks|leave|holidays|notifications|chat|reports|settings|home|admin\/overview)/.test(p)) return null;
+    if (!/^\/api\/ems\/(attendance|tasks|leave|holidays|notifications|chat|reports|settings|home|admin\/overview|projects|worklog)/.test(p)) return null;
     need(user);
     const cfg = await settings();
     const todayStr = dateIn(cfg.timezone);
+    { const x = await projects.route(r, user, qs, { cfg, todayStr }); if (x) return x; }
 
     /* ===== settings ===== */
     if (p === '/api/ems/settings' && m === 'GET') return json(200, { ...cfg, defaults: SETTING_DEFAULTS, can_edit: isAdmin(user) });
@@ -348,9 +354,12 @@ export function createWork({ pool, json, readJson, audit, need, isAdmin }) {
       const view = qs.get('view') || 'mine'; const emp = user.employee_id; const where = [], vals = [];
       if (view === 'mine') { where.push('t.assignee_id = ?'); vals.push(needEmployee(user)); }
       else if (view === 'assigned') { where.push('t.created_by = ?', 't.assignee_id <> ?'); vals.push(needEmployee(user), emp); }
+      else if (view === 'project') { const pid = idOf(qs.get('project_id'), 'project'); await projects.access(user, pid); where.push('t.project_id = ?'); vals.push(pid); }
       else if (view === 'team' || view === 'all') {
         if (user.role === 'employee') throw new HttpError(403, 'You do not have permission to do that.');
         const scope = await scopeIds(user); if (scope) { where.push(`t.assignee_id IN (${scope.map(() => '?').join(',')})`); vals.push(...scope); }
+        const fe = qs.get('employee_id'); if (fe) { where.push('t.assignee_id = ?'); vals.push(idOf(fe, 'employee')); }
+        const fp = qs.get('project_id'); if (fp) { where.push('t.project_id = ?'); vals.push(idOf(fp, 'project')); }
       } else bad('Unknown view.');
       const st = qs.get('status'); if (st === 'open') where.push("t.status <> 'done'"); else if (st && TASK_STATUS.includes(st)) { where.push('t.status = ?'); vals.push(st); }
       return json(200, (await pool.query(`${taskSql} ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY (t.status = 'done'), t.due_date IS NULL, t.due_date, t.id DESC LIMIT 300`, vals))[0].map(taskDto));
@@ -361,26 +370,34 @@ export function createWork({ pool, json, readJson, audit, need, isAdmin }) {
       const priority = b.priority == null ? 'medium' : b.priority; if (!TASK_PRIORITY.includes(priority)) bad('Choose a valid priority.');
       if (b.due_date != null && b.due_date !== '' && !validDate(b.due_date)) bad('Choose a valid due date.');
       const assignee = b.assignee_id == null || b.assignee_id === '' ? emp : idOf(b.assignee_id, 'assignee');
+      let projectId = null;
+      if (b.project_id != null && b.project_id !== '') {
+        projectId = idOf(b.project_id, 'project'); const pa = await projects.access(user, projectId);
+        if (!(await projects.isMember(projectId, assignee))) bad('That person is not on this project. Add them to the project first.');
+        if (assignee !== emp && !projects.canManage(pa)) throw new HttpError(403, 'Only the project lead or HR can assign work to other members.');
+      } else
       if (assignee !== emp) { const a = await empInfo(assignee); if (!a || !a.is_active) bad('Choose a valid assignee.'); if (!isAdmin(user) && !(user.role === 'manager' && a.manager_id === emp)) throw new HttpError(403, 'You can only assign tasks to yourself' + (user.role === 'manager' ? ' or your team.' : '.')); }
-      const [x] = await pool.query('INSERT INTO tasks (title, description, created_by, assignee_id, priority, due_date) VALUES (?,?,?,?,?,?)', [title, description, emp, assignee, priority, b.due_date || null]);
-      if (assignee !== emp) { const a = await empInfo(assignee); await notify(a.user_id, 'task', 'New task assigned to you', title, '/tasks'); }
+      const [x] = await pool.query('INSERT INTO tasks (title, description, created_by, assignee_id, priority, due_date, project_id) VALUES (?,?,?,?,?,?,?)', [title, description, emp, assignee, priority, b.due_date || null, projectId]);
+      await logActivity(x.insertId, emp, 'created', null, title);
+      if (assignee !== emp) { const a = await empInfo(assignee); await notify(a.user_id, 'task', 'New task assigned to you', title, `/tasks?task=${x.insertId}`); }
       await audit(user, 'task.create', 'task', x.insertId, { assignee }, r.ip);
       return json(201, taskDto((await pool.query(`${taskSql} WHERE t.id = ?`, [x.insertId]))[0][0]));
     }
     if ((mm = p.match(/^\/api\/ems\/tasks\/(\d+)(?:\/(comments))?$/))) {
       const t = await loadTask(user, Number(mm[1]));
       if (mm[2] === 'comments') {
-        if (m === 'GET') return json(200, (await pool.query('SELECT c.id, c.body, c.created_at, e.first_name, e.last_name FROM task_comments c JOIN employees e ON e.id = c.author_id WHERE c.task_id = ? ORDER BY c.id', [t.id]))[0].map((c) => ({ id: c.id, body: c.body, created_at: iso(c.created_at), author: employeeName(c) })));
+        if (m === 'GET') return json(200, (await pool.query('SELECT c.id, c.author_id, c.body, c.created_at, e.first_name, e.last_name FROM task_comments c JOIN employees e ON e.id = c.author_id WHERE c.task_id = ? ORDER BY c.id', [t.id]))[0].map((c) => ({ id: c.id, body: c.body, created_at: iso(c.created_at), author: employeeName(c), mine: c.author_id === user.employee_id })));
         if (m === 'POST') {
           const emp = needEmployee(user); const body = clampStr(readJson(r).body, 1000, 'Comment', true);
           const [x] = await pool.query('INSERT INTO task_comments (task_id, author_id, body) VALUES (?,?,?)', [t.id, emp, body]);
-          for (const eid of new Set([t.created_by, t.assignee_id])) if (eid !== emp) { const i = await empInfo(eid); await notify(i.user_id, 'task', `New comment on "${t.title}"`, body, '/tasks'); }
+          const [prior] = await pool.query('SELECT DISTINCT author_id FROM task_comments WHERE task_id = ?', [t.id]); const me = await empInfo(emp);
+          for (const eid of new Set([t.created_by, t.assignee_id, ...prior.map((x) => x.author_id)])) if (eid !== emp) { const i = await empInfo(eid); if (i && i.is_active) await notify(i.user_id, 'task', `${employeeName(me)} on "${t.title}"`, body, `/tasks?task=${t.id}`); }
           return json(201, { id: x.insertId });
         }
       } else {
         if (m === 'GET') return json(200, taskDto(t));
         if (m === 'PATCH') {
-          const b = readJson(r); const emp = user.employee_id; const manage = isAdmin(user) || t.created_by === emp; const sets = [], vals = [];
+          const b = readJson(r); const emp = user.employee_id; const manage = isAdmin(user) || t.created_by === emp || t._plevel === 'creator' || t._plevel === 'lead'; const sets = [], vals = [];
           const isAssignee = t.assignee_id === emp || (user.role === 'manager' && t.assignee_manager === emp);
           if (b.status != null) { if (!TASK_STATUS.includes(b.status)) bad('Choose a valid status.'); if (!manage && !isAssignee) throw new HttpError(403, 'You do not have permission to do that.'); sets.push('status = ?', 'completed_at = ?'); vals.push(b.status, b.status === 'done' ? toSql(new Date()) : null); }
           for (const k of ['title', 'description', 'priority', 'due_date', 'assignee_id']) if (b[k] !== undefined) {
@@ -389,11 +406,13 @@ export function createWork({ pool, json, readJson, audit, need, isAdmin }) {
             else if (k === 'description') { sets.push('description = ?'); vals.push(clampStr(b.description, 4000, 'Description')); }
             else if (k === 'priority') { if (!TASK_PRIORITY.includes(b.priority)) bad('Choose a valid priority.'); sets.push('priority = ?'); vals.push(b.priority); }
             else if (k === 'due_date') { if (b.due_date && !validDate(b.due_date)) bad('Choose a valid due date.'); sets.push('due_date = ?'); vals.push(b.due_date || null); }
-            else { const nid = idOf(b.assignee_id, 'assignee'); const a = await empInfo(nid); if (!a || !a.is_active) bad('Choose a valid assignee.'); if (!isAdmin(user) && !(nid === emp || (user.role === 'manager' && a.manager_id === emp))) throw new HttpError(403, 'You can only assign tasks to yourself or your team.'); sets.push('assignee_id = ?'); vals.push(nid); if (nid !== t.assignee_id && nid !== emp) await notify(a.user_id, 'task', 'A task was assigned to you', t.title, '/tasks'); }
+            else { const nid = idOf(b.assignee_id, 'assignee'); const a = await empInfo(nid); if (!a || !a.is_active) bad('Choose a valid assignee.'); if (t.project_id) { if (!(await projects.isMember(t.project_id, nid))) bad('That person is not on this project.'); } else if (!isAdmin(user) && !(nid === emp || (user.role === 'manager' && a.manager_id === emp))) throw new HttpError(403, 'You can only assign tasks to yourself or your team.'); sets.push('assignee_id = ?'); vals.push(nid); if (nid !== t.assignee_id && nid !== emp) await notify(a.user_id, 'task', 'A task was assigned to you', t.title, `/tasks?task=${t.id}`); }
           }
           if (!sets.length) bad('Nothing to change.');
           await pool.query(`UPDATE tasks SET ${sets.join(', ')} WHERE id = ?`, [...vals, t.id]);
-          if (b.status === 'done' && t.created_by !== emp) { const i = await empInfo(t.created_by); await notify(i.user_id, 'task', 'A task was completed', t.title, '/tasks'); }
+          if (b.status != null && b.status !== t.status) await logActivity(t.id, emp, 'status', t.status, b.status);
+          if (b.assignee_id !== undefined && Number(b.assignee_id) !== t.assignee_id) await logActivity(t.id, emp, 'assigned', String(t.assignee_id), (await empInfo(Number(b.assignee_id))) ? employeeName(await empInfo(Number(b.assignee_id))) : '');
+          if (b.status === 'done' && t.created_by !== emp) { const i = await empInfo(t.created_by); await notify(i.user_id, 'task', 'A task was completed', t.title, `/tasks?task=${t.id}`); }
           return json(200, taskDto((await pool.query(`${taskSql} WHERE t.id = ?`, [t.id]))[0][0]));
         }
         if (m === 'DELETE') { if (!(isAdmin(user) || t.created_by === user.employee_id)) throw new HttpError(403, 'You do not have permission to do that.'); await pool.query('DELETE FROM tasks WHERE id = ?', [t.id]); await audit(user, 'task.delete', 'task', t.id, null, r.ip); return json(200, { ok: true }); }

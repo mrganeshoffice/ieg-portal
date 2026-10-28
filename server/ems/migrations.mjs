@@ -256,4 +256,61 @@ export const migrations = [
       ) ${T}`,
     ],
   },
+  {
+    id: '003_projects_worklogs',
+    statements: [
+      `CREATE TABLE projects (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(140) NOT NULL,
+        description TEXT NULL,
+        status ENUM('planning','active','on_hold','completed') NOT NULL DEFAULT 'active',
+        start_date DATE NULL,
+        due_date DATE NULL,
+        created_by INT UNSIGNED NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY ix_project_creator (created_by),
+        CONSTRAINT fk_project_creator FOREIGN KEY (created_by) REFERENCES employees(id)
+      ) ${T}`,
+      `CREATE TABLE project_members (
+        project_id INT UNSIGNED NOT NULL,
+        employee_id INT UNSIGNED NOT NULL,
+        role ENUM('lead','member') NOT NULL DEFAULT 'member',
+        added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (project_id, employee_id),
+        KEY ix_pm_employee (employee_id),
+        CONSTRAINT fk_pm_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+        CONSTRAINT fk_pm_employee FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+      ) ${T}`,
+      `ALTER TABLE tasks ADD COLUMN project_id INT UNSIGNED NULL, ADD KEY ix_task_project (project_id), ADD CONSTRAINT fk_task_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL`,
+      `CREATE TABLE work_logs (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        employee_id INT UNSIGNED NOT NULL,
+        log_date DATE NOT NULL,
+        project_id INT UNSIGNED NULL,
+        task_id INT UNSIGNED NULL,
+        summary VARCHAR(2000) NOT NULL,
+        hours DECIMAL(4,1) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY ix_wl_emp_date (employee_id, log_date),
+        KEY ix_wl_date (log_date),
+        CONSTRAINT fk_wl_emp FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+        CONSTRAINT fk_wl_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,
+        CONSTRAINT fk_wl_task FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL
+      ) ${T}`,
+      `CREATE TABLE task_activity (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        task_id INT UNSIGNED NOT NULL,
+        employee_id INT UNSIGNED NOT NULL,
+        kind ENUM('created','status','assigned') NOT NULL,
+        from_value VARCHAR(40) NULL,
+        to_value VARCHAR(160) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY ix_ta_task (task_id, id),
+        KEY ix_ta_emp (employee_id, created_at),
+        CONSTRAINT fk_ta_task FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+        CONSTRAINT fk_ta_emp FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+      ) ${T}`,
+    ],
+  },
 ];

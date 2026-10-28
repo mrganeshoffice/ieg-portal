@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ExternalLink, LogOut, Menu, X } from 'lucide-react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import Logo from '@/components/ui/Logo';
+import NotificationBell from '@/components/layout/NotificationBell';
 import { ADMIN_NAV, type AdminTabKey } from './AdminTabs';
 
 function Nav({ active, onPick }: { active: AdminTabKey; onPick?: () => void }) {
@@ -64,6 +65,7 @@ export default function AdminHeader({ active, subtitle }: { active: AdminTabKey;
       <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-surface/85 px-4 backdrop-blur md:px-8">
         <button type="button" className="icon-btn lg:hidden" aria-label="Open menu" onClick={() => setOpen(true)}><Menu size={20} /></button>
         <p className="min-w-0 flex-1 truncate text-sm font-bold">{subtitle}</p>
+        <NotificationBell adminMode />
         <span className="hidden max-w-[16rem] truncate text-xs text-muted md:block">{admin?.email}</span>
         <button type="button" onClick={() => void logout()} className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-xl border border-line px-3 text-sm font-semibold hover:bg-app lg:hidden" aria-label="Sign out"><LogOut size={15} /></button>
       </header>

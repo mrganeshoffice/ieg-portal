@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import type { AdminOverview, AttMonth, AttRecord, AttReportRow, ChatMsg, ChatPerson, HomeSummary, Holiday, LeaveBalance, LeaveRequest, LeaveType, Notice, Task, TaskComment, TeamDay, WorkSettings } from '@/types/work';
+import type { AdminOverview, DayLog, LogRange, Project, TeamLog, WorkLog, ProjectStatus, AttMonth, AttRecord, AttReportRow, ChatMsg, ChatPerson, HomeSummary, Holiday, LeaveBalance, LeaveRequest, LeaveType, Notice, Task, TaskComment, TeamDay, WorkSettings } from '@/types/work';
 
 const q = (o: Record<string, unknown>) => { const p = new URLSearchParams(); for (const [k, v] of Object.entries(o)) if (v !== undefined && v !== '' && v !== null) p.set(k, String(v)); const s = p.toString(); return s ? `?${s}` : ''; };
 const post = <T,>(url: string, body: unknown = {}) => api<T>(url, { method: 'POST', body });
@@ -13,7 +13,8 @@ export const attendanceMonth = (month: string, employeeId?: number) => api<AttMo
 export const attendanceTeam = (date: string) => api<TeamDay>(`/api/ems/attendance/team${q({ date })}`);
 export const correctAttendance = (employeeId: number, date: string, body: { check_in: string; check_out: string | null; note: string }) => api<AttRecord>(`/api/ems/attendance/${employeeId}/${date}`, { method: 'PUT', body });
 // tasks
-export const listTasks = (view: string, status?: string) => api<Task[]>(`/api/ems/tasks${q({ view, status })}`);
+export const listTasks = (view: string, status?: string, extra: { project_id?: number; employee_id?: number } = {}) => api<Task[]>(`/api/ems/tasks${q({ view, status, ...extra })}`);
+export const getTask = (id: number) => api<Task>(`/api/ems/tasks/${id}`);
 export const createTask = (body: Record<string, unknown>) => post<Task>('/api/ems/tasks', body);
 export const updateTask = (id: number, body: Record<string, unknown>) => api<Task>(`/api/ems/tasks/${id}`, { method: 'PATCH', body });
 export const deleteTask = (id: number) => api(`/api/ems/tasks/${id}`, { method: 'DELETE' });
@@ -46,3 +47,15 @@ export const saveSettings = (body: Record<string, unknown>) => api<WorkSettings>
 export const setPortalAccess = (id: number, full: boolean) => post(`/api/ems/employees/${id}/portal-access`, { full });
 
 export const adminOverview = () => api<AdminOverview>('/api/ems/admin/overview');
+
+export const listProjects = () => api<Project[]>('/api/ems/projects');
+export const getProject = (id: number) => api<Project>(`/api/ems/projects/${id}`);
+export interface ProjectBody { name?: string; description?: string | null; status?: ProjectStatus; start_date?: string | null; due_date?: string | null; members?: { employee_id: number; role: 'lead' | 'member' }[] }
+export const createProject = (body: ProjectBody) => post<Project>('/api/ems/projects', body);
+export const updateProject = (id: number, body: ProjectBody) => api<Project>(`/api/ems/projects/${id}`, { method: 'PATCH', body });
+export const deleteProject = (id: number) => api(`/api/ems/projects/${id}`, { method: 'DELETE' });
+export const dayLog = (date: string, employeeId?: number) => api<DayLog>(`/api/ems/worklog${q({ date, employee_id: employeeId })}`);
+export const logRange = (from: string, to: string, employeeId?: number) => api<LogRange>(`/api/ems/worklog/range${q({ from, to, employee_id: employeeId })}`);
+export const teamLog = (date: string) => api<TeamLog>(`/api/ems/worklog/team${q({ date })}`);
+export const addWorkLog = (body: { date?: string; summary: string; hours?: number | null; project_id?: number | null; task_id?: number | null }) => post<WorkLog>('/api/ems/worklog', body);
+export const deleteWorkLog = (id: number) => api(`/api/ems/worklog/${id}`, { method: 'DELETE' });

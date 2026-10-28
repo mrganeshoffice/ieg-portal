@@ -7,7 +7,7 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
     { key: 'employees', to: '/admin/employees', label: 'Employees', icon: BriefcaseBusiness },
     { key: 'attendance', to: '/admin/attendance', label: 'Attendance', icon: Clock },
     { key: 'leave', to: '/admin/leave', label: 'Leave & holidays', icon: CalendarDays },
-    { key: 'tasks', to: '/admin/tasks', label: 'Tasks', icon: SquareCheckBig },
+    { key: 'tasks', to: '/admin/tasks', label: 'Tasks & projects', icon: SquareCheckBig },
     { key: 'chat', to: '/admin/chat', label: 'Chat', icon: MessageSquare },
   ] },
   { group: 'Insights', items: [{ key: 'reports', to: '/admin/reports', label: 'Reports', icon: BarChart3 }] },

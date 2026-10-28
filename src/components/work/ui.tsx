@@ -13,9 +13,10 @@ const TONES: Record<string, string> = {
   missed_checkout: 'bg-red-500/10 text-red-600', absent: 'bg-red-500/10 text-red-600', leave: 'bg-violet-500/15 text-violet-600', off: 'bg-app text-muted', upcoming: 'bg-app text-muted',
   pending: 'bg-gold/20 text-amber-700', approved: 'bg-leaf/15 text-leaf-600', rejected: 'bg-red-500/10 text-red-600', cancelled: 'bg-app text-muted',
   todo: 'bg-app text-muted', in_progress: 'bg-brand/15 text-brand-600', blocked: 'bg-red-500/10 text-red-600', done: 'bg-leaf/15 text-leaf-600',
+  planning: 'bg-app text-muted', active: 'bg-brand/15 text-brand-600', on_hold: 'bg-gold/20 text-amber-700', completed: 'bg-leaf/15 text-leaf-600',
   high: 'bg-red-500/10 text-red-600', medium: 'bg-gold/20 text-amber-700', low: 'bg-app text-muted',
 };
-const LABELS: Record<string, string> = { half_day: 'Half day', missed_checkout: 'No check-out', in_progress: 'In progress', short: 'Short day', working: 'Working', off: 'Day off' };
+const LABELS: Record<string, string> = { half_day: 'Half day', missed_checkout: 'No check-out', in_progress: 'In progress', short: 'Short day', on_hold: 'On hold', working: 'Working', off: 'Day off' };
 export function Pill({ value }: { value: string }) {
   return <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold ${TONES[value] ?? 'bg-app text-muted'}`}>{LABELS[value] ?? value.charAt(0).toUpperCase() + value.slice(1)}</span>;
 }

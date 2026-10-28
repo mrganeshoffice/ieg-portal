@@ -8,7 +8,7 @@ import type { Notice } from '@/types/work';
 const ago = (iso: string) => { const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000)); if (m < 1) return 'just now'; if (m < 60) return `${m} min ago`; const h = Math.round(m / 60); if (h < 24) return `${h} h ago`; return new Date(iso).toLocaleDateString(); };
 
 /** Bell with an unread count. Polls every 30 s while the tab is visible. */
-export default function NotificationBell() {
+export default function NotificationBell({ adminMode = false }: { adminMode?: boolean }) {
   const [items, setItems] = useState<Notice[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
@@ -28,7 +28,7 @@ export default function NotificationBell() {
     document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  const openItem = async (n: Notice) => { setOpen(false); if (!n.is_read) { await markNoticesRead(n.id).catch(() => {}); void load(); } if (n.link) nav(n.link); };
+  const openItem = async (n: Notice) => { setOpen(false); if (!n.is_read) { await markNoticesRead(n.id).catch(() => {}); void load(); } if (n.link) nav(adminMode && /^\/(tasks|leave|attendance|chat|reports|policy)/.test(n.link) ? `/admin${n.link}` : n.link); };
   return (
     <div className="relative" ref={ref}>
       <button className="icon-btn relative" onClick={() => setOpen(!open)} aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`} aria-haspopup="menu" aria-expanded={open}>
